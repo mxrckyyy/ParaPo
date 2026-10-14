@@ -47,7 +47,33 @@
 └── docs/              # The 9 permanent docs (PROJECT_CONTEXT, ARCHITECTURE, ...)
 ```
 
-Actual state 2026-10-14: none of the above exists except `BiyaheMate.pdf`. This is the target; `docs/ARCHITECTURE.md` must be reconciled with reality at Phase 1 start.
+Actual state 2026-10-15 (Phase 1): scaffold exists. Real tree (flat, no `src/`):
+```
+/
+├── app/
+│   ├── page.tsx                  # Landing (hero, demo map preview, search, samples)
+│   ├── layout.tsx / globals.css / icon.svg
+│   ├── map/page.tsx              # Full demo map + legend + list alternative
+│   ├── search/page.tsx           # SearchPanel (mock filter, validation, empty state)
+│   ├── routes/[id]/page.tsx      # Route details (SSG ×3 demo routes, illustrative ETA)
+│   ├── report/page.tsx           # ReportForm preview (saves nothing — Phase 3)
+│   ├── alerts/page.tsx           # Sample alert cards
+│   ├── favorites/page.tsx + profile/page.tsx  # LoginWall (auth — Phase 2)
+│   ├── login/page.tsx + signup/page.tsx       # AuthForm layouts (no auth — Phase 2)
+│   └── admin/page.tsx            # Demo shell (moderation — Phase 4)
+├── components/
+│   ├── ui/ (Button, Input, Card, Badge, EmptyState, LoginWall, DemoNotice)
+│   ├── layout/ (Navbar client w/ mobile menu + skip link, Footer)
+│   ├── map/ (MapView client, DemoMap dynamic ssr:false + "use client", MapLegend)
+│   ├── search/ (SearchPanel client, RouteCard)
+│   ├── reports/ (ReportForm client) · alerts/ (AlertCard, ReportCard) · auth/ (AuthForm client)
+├── lib/ (mock.ts fictional data, validations.ts Zod, format.ts)
+├── lib/supabase/ (client.ts, server.ts, admin.ts — prepared, NOT imported anywhere)
+├── types/index.ts · tailwind.config.ts (palette #16A34A/#0F172A/#F59E0B) · .env.example
+└── docs/ (the 9 permanent docs)
+```
+Deferred to later phases (still per plan): `app/api/`, `app/actions/`, `hooks/`,
+`supabase/migrations/`, `e2e/`, PWA manifest, `middleware.ts` (all Phase 2+).
 
 ## 2. Responsibilities
 - `app/` — routing + layouts; Server Components fetch initial data (SEO, fast paint); client components isolated to map/realtime/forms.

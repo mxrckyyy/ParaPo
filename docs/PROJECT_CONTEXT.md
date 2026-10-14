@@ -30,32 +30,45 @@ Out of MVP (Phase 4+): operator dashboard, direct GPS devices, push notification
 ## 4. Technology Stack
 | Layer | Choice | Version / Note (initial) |
 |---|---|---|
-| Frontend framework | Next.js (React, App Router) | To be scaffolded — target Next.js 14+ / React 18+ |
-| Language | TypeScript | `strict: true` |
-| Styling | Tailwind CSS | v3+ |
-| Map | Leaflet + `react-leaflet`, OpenStreetMap tiles | No Mapbox by default |
-| Backend (BaaS) | Supabase: Auth, PostgreSQL, Realtime, Storage (optional) | Free tier; separate account OK |
-| Client lib | `@supabase/supabase-js` + `@supabase/ssr` (browser/server clients) | To be pinned in package.json |
-| Hosting | Vercel (auto-deploy from GitHub) | — |
-| VCS | Git + GitHub | Not yet initialized (2026-10-14) |
+| Frontend framework | Next.js (React, App Router) | Next.js 14.2.35 / React 18.3.1 (Phase 1) |
+| Language | TypeScript | 5.9.3, `strict: true` |
+| Styling | Tailwind CSS | 3.4.19 (+ postcss, autoprefixer) |
+| Map | Leaflet + `react-leaflet`, OpenStreetMap tiles | leaflet 1.9.4 / react-leaflet 4.2.1, client-only via `dynamic(ssr:false)` |
+| Icons / validation | lucide-react, Zod | 0.441.0 / 3.25.76 |
+| Lint | ESLint | 8.57.1 + eslint-config-next 14.2.35 |
+| Backend (BaaS) | Supabase: Auth, PostgreSQL, Realtime, Storage (optional) | NOT wired (Phase 2). Client modules prepared: supabase-js 2.117.3 / @supabase/ssr 0.5.2, unimported |
+| Hosting | Vercel (auto-deploy from GitHub) | Not connected (needs user auth) |
+| VCS | Git + GitHub | Local git repo initialized Phase 1 (no remote yet) |
 | Design | Figma (optional) | — |
 | PWA | `next-pwa` or native App Router + manifest + service worker | Phase 4 |
 
 No custom backend server. Frontend talks directly to Supabase via RLS-secured anon key; service-role key never ships to client.
 
-## 5. Implementation Status (2026-10-14, Phase 0)
-- Phase 0 (this task): documentation only. **No application code exists.**
-- Repo state: single file `BiyaheMate.pdf`; no `package.json`, no git repo, no Next.js scaffold, no Supabase project linked.
-- All 9 required docs: created in `docs/` (see `docs/CHANGELOG.md`).
+## 5. Implementation Status (2026-10-15, Phase 1 done locally)
+- Phase 0: documentation baseline — DONE.
+- Phase 1: foundation — CODE COMPLETE locally, deployment pending.
+  Implemented: Next.js 14 App Router scaffold (strict TS, Tailwind, ESLint);
+  11 static routes (`/`, `/map`, `/search`, `/routes/[id]`, `/report`, `/alerts`,
+  `/favorites`, `/profile`, `/login`, `/signup`, `/admin`); client-only Leaflet
+  demo map (OSM tiles) with fictional markers + legend + list alternative;
+  mock search with validation/empty states; report-form preview (saves nothing);
+  login/signup layouts (no auth); login walls; admin demo shell; `lib/mock.ts`
+  fictional data, Zod schemas, Supabase client stubs (unwired); `.env.example`;
+  README quickstart. See `docs/CHANGELOG.md` Phase 1 entry.
+- Repo state: local git (3 commits), no GitHub remote, no Supabase project,
+  no Vercel project. `BiyaheMate.pdf` preserved in root as reference spec.
 
 ## 6. Current Phase / Next Task / Outstanding Issues
-- Current phase: **Phase 0 — complete after this report.**
-- Next task: **Phase 1 Foundation** — scaffold Next.js+TS+Tailwind+Leaflet, static UI screens with mock data, init GitHub repo. See `docs/IMPLEMENTATION_PLAN.md` Phase 1.
+- Current phase: **Phase 1 — code complete, deploy/remote pending.**
+- Next task: **Phase 2 Supabase Integration** — needs a Supabase project first
+  (URL + anon key), then migrations for 7 tables + RLS. Before that, recommended
+  manual checks: open `npm run dev` in a real browser (map tiles, 360px + 1280px
+  layouts). See `docs/IMPLEMENTATION_PLAN.md` Phase 2.
 - Outstanding issues / blockers:
-  1. No `package.json` — Next.js scaffold not run.
-  2. No git repo — `git init` + GitHub remote pending.
-  3. No Supabase project — URL/anon key unavailable; env vars unset.
-  4. No lint/test/build toolchain — nothing to execute yet (recorded in `docs/TESTING.md`).
+  1. No GitHub remote — `gh` CLI unavailable; push needs user auth (steps in Final Report / TESTING §6).
+  2. No Vercel project — needs user auth; project is build-compatible (`npm run build` green).
+  3. No Supabase project — URL/anon key unavailable; env vars unset (Phase 2 prerequisite).
+  4. Map tiles + responsive layouts not verified in a real browser (no headless browser tooling here).
 
 ## 7. Key Decisions + Reasons
 1. **BaaS over custom server** — solo frontend dev, 8–12 week MVP; Supabase covers auth/DB/realtime without backend code.
@@ -74,20 +87,28 @@ NEXT_PUBLIC_MAPBOX_TOKEN   # optional, only if Mapbox layer added
 ```
 Server-only (never `NEXT_PUBLIC_`): `SUPABASE_SERVICE_ROLE_KEY` — only in Supabase dashboard / Vercel server env / local `.env.local` (gitignored), for admin scripts only.
 
-## 9. Commands (toolchain pending Phase 1)
-Intended (not yet runnable — no package.json):
+## 9. Commands (Phase 1 toolchain live)
 ```
-npm run dev      # Next.js dev server
-npm run lint     # ESLint
-npm run typecheck # tsc --noEmit
-npm run test     # Vitest + Playwright (to be configured)
-npm run build    # next build
+npm run dev       # Next.js dev server → http://localhost:3000
+npm run lint      # next lint — PASS 2026-10-15 (no warnings/errors)
+npm run typecheck # tsc --noEmit (strict) — PASS 2026-10-15
+npm run build     # next build — PASS 2026-10-15 (17 static pages)
+npm start         # serve production build — verified, 11/11 routes HTTP 200
 ```
-Actual Phase 0 checks run: `node -v` → v24.19.0; `npm -v` → 11.17.0; `git --version` → 2.55.0; `package.json` → NOT FOUND; `git status` → not a git repo. Lint/type/test/build: NOT EXECUTABLE (no scaffold). Recorded as failures/blockers, not passes.
+Phase 1 results: `node -v` → v24.19.0; `npm -v` → 11.17.0; install → 407 packages
+(deprecation warnings only, eslint-8 chain); lint/typecheck/build all green;
+prod smoke test 11/11 routes 200. Full log in `docs/TESTING.md` §5. No unit/E2E
+framework configured yet (Phase 3); RLS tests blocked on Supabase (Phase 2).
 
 ## 10. Known Bugs / Failed Tests / Blockers
-- No code → no test results. `docs/TESTING.md` marks all suites "not executed."
-- Blockers are setup items in §6, not application bugs.
+- Build bug found + fixed in Phase 1: `window is not defined` prerendering `/`
+  and `/map` — `next/dynamic(ssr:false)` wrapper lacked a client boundary.
+  Fixed by adding `"use client"` to `components/map/DemoMap.tsx`; build green after.
+- Map tiles and 360px/1280px layouts NOT verified in a real browser (no headless
+  browser tooling in this environment) — manual check recommended before deploy.
+- Blockers: GitHub remote + Vercel need user auth; Supabase project needed for Phase 2.
+- `docs/TESTING.md` §5–§6 hold the full verified state; nothing is claimed green
+  that was not executed.
 
 ## 11. Context Recovery Procedure (mandatory every OpenCode session / reset)
 
