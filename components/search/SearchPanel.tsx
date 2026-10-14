@@ -8,10 +8,17 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
 import { searchDemoRoutes } from "@/lib/mock";
 import { searchInputSchema } from "@/lib/validations";
-import { RouteCard } from "./RouteCard";
+import type { LiveRoute } from "@/lib/db";
+import { LiveRouteCard, RouteCard } from "./RouteCard";
 
-/** Demo route search over fictional data. Live search ships in Phase 2/3. */
-export function SearchPanel() {
+/** Route search. Live verified rows (when present) render above fictional demo matches. */
+export function SearchPanel({
+  liveRoutes = [],
+  liveAvailable = false,
+}: {
+  liveRoutes?: LiveRoute[];
+  liveAvailable?: boolean;
+}) {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [errors, setErrors] = useState<{ origin?: string; destination?: string }>({});
@@ -19,6 +26,12 @@ export function SearchPanel() {
   const [query, setQuery] = useState("");
 
   const results = submitted && !errors.origin && !errors.destination ? searchDemoRoutes(query) : [];
+  const liveResults =
+    submitted && !errors.origin && !errors.destination && liveAvailable
+      ? liveRoutes.filter((r) =>
+          `${r.name} ${r.origin} ${r.destination}`.toLowerCase().includes(query.trim().toLowerCase()),
+        )
+      : [];
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,14 +79,27 @@ export function SearchPanel() {
       <DemoNotice />
 
       {submitted ? (
-        results.length > 0 ? (
-          <ul className="flex flex-col gap-3" aria-live="polite">
-            {results.map((r) => (
-              <li key={r.id}>
-                <RouteCard route={r} />
-              </li>
-            ))}
-          </ul>
+        results.length > 0 || liveResults.length > 0 ? (
+          <div className="flex flex-col gap-3" aria-live="polite">
+            {liveResults.length > 0 ? (
+              <ul className="flex flex-col gap-3" aria-label="Verified routes">
+                {liveResults.map((r) => (
+                  <li key={r.id}>
+                    <LiveRouteCard route={r} />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {results.length > 0 ? (
+              <ul className="flex flex-col gap-3" aria-label="Demo routes">
+                {results.map((r) => (
+                  <li key={r.id}>
+                    <RouteCard route={r} />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
         ) : (
           <EmptyState
             title="No demo routes match"

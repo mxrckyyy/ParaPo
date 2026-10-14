@@ -119,6 +119,11 @@ Test matrix in `docs/TESTING.md` covers guest/commuter/admin × each table.
 - `is_admin()` above (SECURITY DEFINER, `search_path=public` fixed).
 - `set_role(target uuid, new_role text)`: admin-only wrapper; checks `is_admin()`, validates enum.
 - Migrations: `supabase/migrations/YYYYMMDDHHMMSS_<name>.sql`, numbered, committed; never edit applied migrations — new migration to fix.
+- Phase 2 migration: `supabase/migrations/20261015000000_phase2_core_schema.sql`
+  implements §1–§4 exactly (incl. trigram index, partial unique favorites indexes,
+  function revokes) — STATUS: committed, NOT APPLIED (needs user SQL Editor run;
+  non-destructive, CREATE-only). `supabase/seed.sql` (SAMPLE rows) and
+  `supabase/verify-phase2.sql` (read-only checks) accompany it.
 - Admin grant (secure, run in SQL editor or script with service-role, never client):
 ```sql
 update public.users set role='admin' where email='admin@example.com';

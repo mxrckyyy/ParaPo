@@ -36,7 +36,7 @@ Out of MVP (Phase 4+): operator dashboard, direct GPS devices, push notification
 | Map | Leaflet + `react-leaflet`, OpenStreetMap tiles | leaflet 1.9.4 / react-leaflet 4.2.1, client-only via `dynamic(ssr:false)` |
 | Icons / validation | lucide-react, Zod | 0.441.0 / 3.25.76 |
 | Lint | ESLint | 8.57.1 + eslint-config-next 14.2.35 |
-| Backend (BaaS) | Supabase: Auth, PostgreSQL, Realtime, Storage (optional) | NOT wired (Phase 2). Client modules prepared: supabase-js 2.117.3 / @supabase/ssr 0.5.2, unimported |
+| Backend (BaaS) | Supabase | WIRED Phase 2: project URL + publishable key in gitignored `.env.local`; browser/server clients live; middleware refreshes sessions; tables NOT created yet (migration pending user apply). supabase-js 2.117.3 / @supabase/ssr 0.5.2 |
 | Hosting | Vercel (auto-deploy from GitHub) | Not connected (needs user auth) |
 | VCS | Git + GitHub | Local git repo initialized Phase 1 (no remote yet) |
 | Design | Figma (optional) | — |
@@ -44,31 +44,36 @@ Out of MVP (Phase 4+): operator dashboard, direct GPS devices, push notification
 
 No custom backend server. Frontend talks directly to Supabase via RLS-secured anon key; service-role key never ships to client.
 
-## 5. Implementation Status (2026-10-15, Phase 1 done locally)
-- Phase 0: documentation baseline — DONE.
-- Phase 1: foundation — CODE COMPLETE locally, deployment pending.
-  Implemented: Next.js 14 App Router scaffold (strict TS, Tailwind, ESLint);
-  11 static routes (`/`, `/map`, `/search`, `/routes/[id]`, `/report`, `/alerts`,
-  `/favorites`, `/profile`, `/login`, `/signup`, `/admin`); client-only Leaflet
-  demo map (OSM tiles) with fictional markers + legend + list alternative;
-  mock search with validation/empty states; report-form preview (saves nothing);
-  login/signup layouts (no auth); login walls; admin demo shell; `lib/mock.ts`
-  fictional data, Zod schemas, Supabase client stubs (unwired); `.env.example`;
-  README quickstart. See `docs/CHANGELOG.md` Phase 1 entry.
-- Repo state: local git (3 commits), no GitHub remote, no Supabase project,
-  no Vercel project. `BiyaheMate.pdf` preserved in root as reference spec.
+## 5. Implementation Status (2026-10-15, Phase 2 code done, migration pending)
+- Phase 0: DONE. Phase 1: code complete locally, deploy pending.
+- Phase 2: application code COMPLETE, database NOT migrated (needs 2 minutes in
+  the Supabase SQL Editor — see MIGRATE-01 in `docs/TESTING.md` §6).
+  Implemented: `.env.local` (gitignored) with project URL + publishable key;
+  env standardized to `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; `middleware.ts`
+  session refresh; real signup/login/logout Server Actions with Zod validation,
+  friendly errors, confirmation-sent handling; session-aware nav + profile
+  (email, role, logout); owner-scoped favorites actions + list + star toggle
+  with honest setup-degraded states; live route search/detail via `lib/db.ts`
+  with demo fallback (Live badge vs Demo badge); hand-maintained
+  `types/database.ts`; migration `supabase/migrations/20261015000000_*`
+  (7 tables, constraints, trigram index, `is_admin`/`set_role`/`handle_new_user`,
+  RLS per schema doc) + `supabase/seed.sql` (SAMPLE rows) + `supabase/verify-phase2.sql`.
+  Connectivity verified read-only (GoTrue health, PGRST205 proves tables absent,
+  400 on bad login). RLS/auth E2E await migration + user-run flows.
+- Repo state: local git, no remote; Supabase connected but unmigrated; no Vercel.
 
 ## 6. Current Phase / Next Task / Outstanding Issues
-- Current phase: **Phase 1 — code complete, deploy/remote pending.**
-- Next task: **Phase 2 Supabase Integration** — needs a Supabase project first
-  (URL + anon key), then migrations for 7 tables + RLS. Before that, recommended
-  manual checks: open `npm run dev` in a real browser (map tiles, 360px + 1280px
-  layouts). See `docs/IMPLEMENTATION_PLAN.md` Phase 2.
+- Current phase: **Phase 2 — code complete, migration pending user action.**
+- Next task: **Apply the migration** (Dashboard → SQL Editor → paste
+  `supabase/migrations/20261015000000_phase2_core_schema.sql` → Run; then run
+  `supabase/verify-phase2.sql` and optionally `supabase/seed.sql`). After that:
+  sign up in the app, confirm email behavior, save a favorite — then approve
+  **Phase 3 Realtime & Crowdsourcing**. See `docs/IMPLEMENTATION_PLAN.md`.
 - Outstanding issues / blockers:
-  1. No GitHub remote — `gh` CLI unavailable; push needs user auth (steps in Final Report / TESTING §6).
-  2. No Vercel project — needs user auth; project is build-compatible (`npm run build` green).
-  3. No Supabase project — URL/anon key unavailable; env vars unset (Phase 2 prerequisite).
-  4. Map tiles + responsive layouts not verified in a real browser (no headless browser tooling here).
+  1. MIGRATE-01: tables + RLS not applied (user SQL Editor step; file ready, non-destructive).
+  2. No GitHub remote / Vercel project — need user auth (Vercel will need the two `NEXT_PUBLIC_*` names).
+  3. Email-confirmation delivery unverified (depends on project mail settings).
+  4. Map tiles + responsive layouts not verified in a real browser.
 
 ## 7. Key Decisions + Reasons
 1. **BaaS over custom server** — solo frontend dev, 8–12 week MVP; Supabase covers auth/DB/realtime without backend code.
@@ -77,11 +82,12 @@ No custom backend server. Frontend talks directly to Supabase via RLS-secured an
 4. **Crowdsourced sightings first, GPS later** — hardware integration too costly for MVP; validate with community data + votes/moderation.
 5. **RLS on every table + server-side role checks** — anon key is public; DB is the enforcement point.
 6. **Project renamed BiyaheMate → PARA PO** — owner request 2026-10-14; "Para po" is the jeepney stop phrase, more memorable/local. Old PDF name retained as reference only.
+7. **Publishable-key naming (Phase 2)** — standardized on `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (new-style `sb_publishable_…` key) instead of the legacy `ANON_KEY` name across clients, `.env.example`, and docs, since the issued credential is a publishable key.
 
 ## 8. Environment Variables (names only, no secrets)
 ```
 NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 NEXT_PUBLIC_MAP_TILE_URL   # optional, default https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
 NEXT_PUBLIC_MAPBOX_TOKEN   # optional, only if Mapbox layer added
 ```
@@ -95,10 +101,11 @@ npm run typecheck # tsc --noEmit (strict) — PASS 2026-10-15
 npm run build     # next build — PASS 2026-10-15 (17 static pages)
 npm start         # serve production build — verified, 11/11 routes HTTP 200
 ```
-Phase 1 results: `node -v` → v24.19.0; `npm -v` → 11.17.0; install → 407 packages
-(deprecation warnings only, eslint-8 chain); lint/typecheck/build all green;
-prod smoke test 11/11 routes 200. Full log in `docs/TESTING.md` §5. No unit/E2E
-framework configured yet (Phase 3); RLS tests blocked on Supabase (Phase 2).
+Phase 2 results: lint/typecheck/build all green after minor fixes; Supabase
+connectivity verified read-only (GoTrue health, PGRST205 = tables absent,
+400 on bad login); prod smoke 11/11 routes 200 (1 transient 500, see OPEN-03)
+plus guest wall checks and live security-header verification. Full log in
+`docs/TESTING.md` §5c. RLS matrix + real auth flows await migration + user runs.
 
 ## 10. Known Bugs / Failed Tests / Blockers
 - Build bug found + fixed in Phase 1: `window is not defined` prerendering `/`
@@ -106,8 +113,8 @@ framework configured yet (Phase 3); RLS tests blocked on Supabase (Phase 2).
   Fixed by adding `"use client"` to `components/map/DemoMap.tsx`; build green after.
 - Map tiles and 360px/1280px layouts NOT verified in a real browser (no headless
   browser tooling in this environment) — manual check recommended before deploy.
-- Blockers: GitHub remote + Vercel need user auth; Supabase project needed for Phase 2.
-- `docs/TESTING.md` §5–§6 hold the full verified state; nothing is claimed green
+- Blockers: migration apply (MIGRATE-01, user SQL Editor step); GitHub remote + Vercel need user auth; email-confirmation delivery unverified.
+- `docs/TESTING.md` §5c–§6 hold the full verified state; nothing is claimed green
   that was not executed.
 
 ## 11. Context Recovery Procedure (mandatory every OpenCode session / reset)

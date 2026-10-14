@@ -1,28 +1,38 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { signIn, signUp } from "@/app/actions/auth";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 
-/**
- * Static auth layout for Phase 1. No Supabase calls, no sessions, no fake login —
- * submitting only explains that real authentication ships in Phase 2.
- */
+/** Real Supabase email/password form. Sessions persist via httpOnly cookies. */
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [notice, setNotice] = useState(false);
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.includes("@") || password.length < 6) {
-      setError("Enter a valid email and a password of at least 6 characters.");
-      return;
-    }
     setError(undefined);
-    setNotice(true);
+    setConfirmationSent(false);
+    setPending(true);
+    try {
+      const form = new FormData();
+      form.set("email", email);
+      form.set("password", password);
+      const outcome = mode === "login" ? await signIn(form) : await signUp(form);
+      // Success with a session redirects inside the action (never returns).
+      if (!outcome.ok) setError(outcome.error);
+      else if (outcome.confirmationSent) setConfirmationSent(true);
+      router.refresh();
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -32,8 +42,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       </h1>
       <p className="mt-1 text-sm text-asphalt-muted">
         {mode === "login"
-          ? "Accounts are not active yet — this layout previews the Phase 2 sign-in screen."
-          : "Accounts are not active yet — this layout previews the Phase 2 registration screen."}
+          ? "Welcome back, commuter."
+          : "One account for favorites, reports, and trip sharing."}
       </p>
       <form onSubmit={onSubmit} className="mt-4 flex flex-col gap-3">
         <Input
@@ -43,6 +53,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
+          required
         />
         <Input
           label="Password"
@@ -52,13 +63,16 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           onChange={(e) => setPassword(e.target.value)}
           error={error}
           autoComplete={mode === "login" ? "current-password" : "new-password"}
+          required
         />
-        <Button type="submit">{mode === "login" ? "Log in" : "Sign up"}</Button>
+        <Button type="submit" disabled={pending}>
+          {pending ? "Please wait…" : mode === "login" ? "Log in" : "Sign up"}
+        </Button>
       </form>
-      {notice ? (
-        <p role="status" className="mt-3 rounded-lg bg-surface px-3 py-2 text-sm text-asphalt">
-          Demo only — nothing was sent or created. Real email/password authentication
-          (Supabase Auth) launches in Phase 2.
+      {confirmationSent ? (
+        <p role="status" className="mt-3 rounded-lg bg-primary/10 px-3 py-2 text-sm text-primary-dark">
+          Account created — check your email for the confirmation link, then log in.
+          (Email delivery depends on the Supabase project&apos;s mail settings.)
         </p>
       ) : null}
     </Card>

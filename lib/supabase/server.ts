@@ -1,5 +1,5 @@
-// Supabase server client (Phase 2+). Prepared in Phase 1 so the import
-// surface matches docs/ARCHITECTURE.md §5. NOT imported anywhere yet.
+// Supabase server client (RSC, Server Actions, middleware). Session lives in
+// httpOnly cookies; middleware refreshes tokens. See docs/ARCHITECTURE.md §5.
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
@@ -7,7 +7,7 @@ export function createClient() {
   const cookieStore = cookies();
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
     {
       cookies: {
         getAll() {

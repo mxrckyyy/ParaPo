@@ -6,7 +6,7 @@
 - Roles: `commuter` (default), `admin`, `operator` (reserved future). Role lives in `public.users.role`; settable only via `is_admin()`-gated function (`docs/DATABASE_SCHEMA.md` §4).
 
 ## 2. Env / Secret Handling
-- Public (safe in client): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_MAP_TILE_URL`, optional `NEXT_PUBLIC_MAPBOX_TOKEN`.
+- Public (safe in client): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_MAP_TILE_URL`, optional `NEXT_PUBLIC_MAPBOX_TOKEN`.
 - Secret (server-only): `SUPABASE_SERVICE_ROLE_KEY` — Vercel server env + local `.env.local` (gitignored) only. Never `NEXT_PUBLIC_`, never committed, never imported in client bundles.
 - `.env.local` / `.env*.local` gitignored; `.env.example` documents names with placeholder values. Vercel env set via dashboard, preview vs production separated.
 

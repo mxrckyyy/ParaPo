@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DemoNotice } from "@/components/ui/DemoNotice";
 import { DEMO_ALERTS, DEMO_REPORTS, DEMO_VEHICLES, METRO_MANILA_CENTER } from "@/lib/mock";
+import { getRouteSummaries } from "@/lib/db";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { routes: liveRoutes, source } = await getRouteSummaries();
+  const liveAvailable = source === "supabase";
   return (
     <div className="flex flex-col gap-8">
       <DemoNotice />
@@ -75,7 +78,7 @@ export default function HomePage() {
         <h2 id="search-heading" className="text-lg font-bold">
           Find a demo route
         </h2>
-        <SearchPanel />
+        <SearchPanel liveRoutes={liveAvailable ? liveRoutes : []} liveAvailable={liveAvailable} />
       </section>
 
       {/* Reports + alerts preview */}

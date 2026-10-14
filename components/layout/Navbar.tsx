@@ -13,7 +13,7 @@ const links = [
   { href: "/profile", label: "Profile" },
 ];
 
-export function Navbar() {
+export function Navbar({ userEmail }: { userEmail: string | null }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -51,10 +51,10 @@ export function Navbar() {
           ))}
           <li>
             <Link
-              href="/login"
+              href={userEmail ? "/profile" : "/login"}
               className="ml-2 inline-flex min-h-[44px] items-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
             >
-              Log in
+              {userEmail ? "Profile" : "Log in"}
             </Link>
           </li>
         </ul>
@@ -88,11 +88,11 @@ export function Navbar() {
           ))}
           <li className="py-2">
             <Link
-              href="/login"
+              href={userEmail ? "/profile" : "/login"}
               onClick={() => setOpen(false)}
               className="block rounded-lg bg-primary px-3 py-3 text-center text-sm font-semibold text-white hover:bg-primary-dark"
             >
-              Log in
+              {userEmail ? "Profile" : "Log in"}
             </Link>
           </li>
         </ul>

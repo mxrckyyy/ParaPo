@@ -63,17 +63,23 @@ Actual state 2026-10-15 (Phase 1): scaffold exists. Real tree (flat, no `src/`):
 │   └── admin/page.tsx            # Demo shell (moderation — Phase 4)
 ├── components/
 │   ├── ui/ (Button, Input, Card, Badge, EmptyState, LoginWall, DemoNotice)
-│   ├── layout/ (Navbar client w/ mobile menu + skip link, Footer)
+│   ├── layout/ (Navbar client w/ session-aware links + skip link, Footer)
 │   ├── map/ (MapView client, DemoMap dynamic ssr:false + "use client", MapLegend)
-│   ├── search/ (SearchPanel client, RouteCard)
-│   ├── reports/ (ReportForm client) · alerts/ (AlertCard, ReportCard) · auth/ (AuthForm client)
-├── lib/ (mock.ts fictional data, validations.ts Zod, format.ts)
-├── lib/supabase/ (client.ts, server.ts, admin.ts — prepared, NOT imported anywhere)
-├── types/index.ts · tailwind.config.ts (palette #16A34A/#0F172A/#F59E0B) · .env.example
+│   ├── search/ (SearchPanel client + live section, RouteCard + LiveRouteCard)
+│   ├── reports/ (ReportForm client) · alerts/ (AlertCard, ReportCard)
+│   ├── auth/ (AuthForm wired to Server Actions, LogoutButton)
+│   ├── favorites/ (FavoriteButton, RemoveFavoriteButton, FavoritesSetupNotice)
+├── app/actions/ (auth.ts signup/login/logout, favorites.ts toggle/remove — Phase 2)
+├── middleware.ts (Supabase session refresh — Phase 2)
+├── lib/ (mock.ts fictional data, validations.ts Zod, format.ts, auth.ts session helpers, db.ts live-with-demo-fallback)
+├── lib/supabase/ (client.ts, server.ts — publishable key; admin.ts service-role, unimported)
+├── types/ (index.ts demo shapes, database.ts hand-maintained rows — Phase 2)
+├── supabase/ (migrations/20261015000000_phase2_core_schema.sql NOT APPLIED, seed.sql, verify-phase2.sql — Phase 2)
+├── tailwind.config.ts (palette #16A34A/#0F172A/#F59E0B) · .env.example (PUBLISHABLE_KEY names)
 └── docs/ (the 9 permanent docs)
 ```
-Deferred to later phases (still per plan): `app/api/`, `app/actions/`, `hooks/`,
-`supabase/migrations/`, `e2e/`, PWA manifest, `middleware.ts` (all Phase 2+).
+Deferred to later phases (still per plan): `app/api/`, `hooks/`,
+`e2e/`, PWA manifest, Realtime subscriptions, report/vehicle mutations (Phase 3+).
 
 ## 2. Responsibilities
 - `app/` — routing + layouts; Server Components fetch initial data (SEO, fast paint); client components isolated to map/realtime/forms.
@@ -103,8 +109,8 @@ Deferred to later phases (still per plan): `app/api/`, `app/actions/`, `hooks/`,
 ## 5. Supabase Client Responsibilities
 | Client | File | Key | Where used | May do |
 |---|---|---|---|---|
-| Browser | `lib/supabase/client.ts` | anon | Client components, hooks | Subscribe, filtered reads, auth UI calls |
-| Server | `lib/supabase/server.ts` | anon + cookies | RSC, Server Actions, middleware | Session reads, RLS-scoped writes, pre-render fetches |
+| Browser | `lib/supabase/client.ts` | publishable | Client components, hooks | Subscribe, filtered reads, auth UI calls |
+| Server | `lib/supabase/server.ts` | publishable + cookies | RSC, Server Actions, middleware | Session reads, RLS-scoped writes, pre-render fetches |
 | Admin | `lib/supabase/admin.ts` | service-role | Route Handlers / scripts only | RLS bypass, user role grants, backfills; NEVER imported by client code |
 
 Rule: if a check matters for security, enforce in RLS + server code, never only in the UI.
