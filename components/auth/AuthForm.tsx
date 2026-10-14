@@ -26,10 +26,26 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       form.set("email", email);
       form.set("password", password);
       const outcome = mode === "login" ? await signIn(form) : await signUp(form);
-      // Success with a session redirects inside the action (never returns).
-      if (!outcome.ok) setError(outcome.error);
-      else if (outcome.confirmationSent) setConfirmationSent(true);
-      router.refresh();
+      // Backstop only (BUG-03 fix makes this unreachable in normal flow):
+      // a missing result shows a friendly error instead of crashing.
+      if (!outcome || typeof outcome !== "object") {
+        setError("Something went wrong. Please try again.");
+        return;
+      }
+      if (!outcome.ok) {
+        setError(outcome.error);
+        return;
+      }
+      if (outcome.confirmationSent) {
+        setConfirmationSent(true);
+        return;
+      }
+      // Successful session: actions return redirectTo instead of redirecting
+      // server-side, so navigation is explicit and the result is never undefined.
+      if (outcome.redirectTo) {
+        router.push(outcome.redirectTo);
+        router.refresh();
+      }
     } finally {
       setPending(false);
     }

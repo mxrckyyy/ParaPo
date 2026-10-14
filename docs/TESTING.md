@@ -91,6 +91,14 @@ Environment: same as Phase 1. Supabase project configured via gitignored `.env.l
 - Remediation prepared (NOT applied — needs user SQL Editor run): `supabase/migrations/20261015000001_phase2_privilege_repair.sql` (GRANTs only, idempotent, includes pre-run privilege diagnostic). Rationale in `docs/TESTING.md` §6 PRIV-01.
 - NOT EXECUTED (need a real browser + user-owned test accounts — steps in §6 AUTH-02): signup/email-confirmation behavior, login, session persistence across refresh, logout + wall return, invalid-login messaging in-app, favorites add/remove E2E, two-account owner isolation, authenticated role-escalation probe, `supabase gen types`, browser visual.
 
+## 5e. Actual Results (login crash fix, 2026-10-15 — no other code changes)
+- `npm run lint` — PASS, no warnings/errors.
+- `npm run typecheck` — PASS.
+- `npm run build` — PASS (twice): "Compiled successfully", 17/17 static pages. Second build was a clean rebuild (`Remove-Item .next`) after BUILD-01 below.
+- Prod smoke from clean build — PASS: `/login`, `/signup`, `/profile`, `/favorites`, `/` all 200; login page renders email + password fields.
+- BUILD-01 (found + fixed during this task): `next start` crashed on every request with `Cannot find module './vendor-chunks/@supabase.js'` — stale/corrupt `.next` output, not source code. Fixed by deleting `.next` and rebuilding; all routes 200 after. Likely same family as the earlier transient OPEN-03 500 (single unreproduced `/routes/[id]` 500); OPEN-03 now considered explained — a corrupt build artifact, resolved by clean rebuild, no recurrence since.
+- Live login with a real account NOT executed (needs the user's browser + own credentials) — exact retest steps in §6 AUTH-02a. No login success claimed.
+
 ## 6. Defects / Unresolved
 - SETUP-01: RESOLVED Phase 1.
 - SETUP-02: still open (no GitHub remote; user push steps unchanged).
@@ -111,6 +119,14 @@ Environment: same as Phase 1. Supabase project configured via gitignored `.env.l
   9. Report back which steps passed/failed; do NOT paste passwords, tokens, or JWTs anywhere.
 - VERCEL-01: still open (needs the two `NEXT_PUBLIC_*` names at deploy time).
 - OPEN-01 (browser visual), OPEN-02 (Prettier): unchanged.
-- OPEN-03: no recurrence in this pass (11/11 + route re-hits clean).
+- OPEN-03: closed — attributed to the corrupt-build family (see BUILD-01); clean rebuild + repeated hits show no recurrence.
 - OPEN-04: alerts/users anon-401 anomaly (see PRIV-01). Fail-closed; repair prepared.
+- BUG-03 (fixed): login crash `TypeError: Cannot read properties of undefined (reading 'ok')` in `AuthForm.tsx`. Root cause: `signIn`/`signUp` ended with server-side `redirect()`, which throws NEXT_REDIRECT; when awaited imperatively from the submit handler, the client dispatcher consumes the redirect and the promise resolves `undefined` — so the crash hit exactly on successful login. Fix: actions now return `{ ok, confirmationSent, redirectTo }` on every path (no `redirect()` in actions; nothing thrown or swallowed); `AuthForm` navigates via `router.push(redirectTo)` + `router.refresh()`; same pattern applied to `signOut`/`LogoutButton`; defensive `if (!outcome)` guard added as backstop only. Zod, Supabase calls, friendly errors, and confirmation flow unchanged. Verified by lint/typecheck/build + smoke; live login still needs AUTH-02a.
+- BUILD-01 (fixed): corrupt `.next` output crashed `next start` (`Cannot find module './vendor-chunks/@supabase.js'`). Fixed by clean rebuild; all routes 200.
+- AUTH-02a (USER LOGIN RETEST — `npm run dev` → http://localhost:3000, use your existing account, never share the password):
+  1. Open `/login`, enter your email + password, submit → expect navigation to `/profile` showing your email (NO crash, NO error banner).
+  2. If you instead see "Incorrect email or password," the fix still worked (that is the friendly-error path) — double-check the credentials.
+  3. On `/profile`, refresh the browser → you stay logged in (session persists).
+  4. Click Log out → you return to `/login`; `/favorites` and `/profile` show login walls.
+  5. Report which steps passed; on ANY red error box, paste its exact text (no tokens/passwords).
 - BUG-01, BUG-02: remain fixed/verified.

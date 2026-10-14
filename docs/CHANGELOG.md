@@ -45,3 +45,9 @@ All significant changes by phase. Docs updated per Maintenance Rules; test claim
 - Found: anon SELECT denied at privilege stage (empty 401) on `alerts` + `users` while siblings 200 — fail-closed, no vulnerability. Prepared additive-only `20261015000001_phase2_privilege_repair.sql` (GRANTs + diagnostic; RLS untouched) for the user's SQL Editor run. No policy text changed; RLS never disabled.
 - `lint`/`typecheck`/`build` PASS; prod smoke 11/11 200 vs migrated DB; no code defects found, no app-code changes needed.
 - NOT executed (need user): repair SQL run, AUTH-02 browser tests (signup/confirmation/login/persistence/logout/favorites E2E/owner isolation), `gen types`, browser visual. Phase 2 gate stays open until those land.
+
+## [Phase 2 fix] — 2026-10-15 — login crash BUG-03 fixed (no redirect signals in actions)
+- Root cause: `signIn`/`signUp` ended with server-side `redirect()`, which throws NEXT_REDIRECT; awaited imperatively from the submit handler, the client dispatcher consumed the redirect and the promise resolved `undefined`, so `outcome.ok` crashed exactly on successful login.
+- Fix: actions return `{ ok, confirmationSent, redirectTo }` on every path (no `redirect()` calls, nothing thrown or swallowed); `AuthForm` navigates via `router.push` + `router.refresh()` with a defensive `if (!outcome)` backstop; same pattern for `signOut`/`LogoutButton`. Validation, Supabase flow, friendly errors, confirmation path unchanged.
+- Also fixed BUILD-01 (corrupt `.next` vendor chunk broke `next start`; clean rebuild) and closed OPEN-03 (same corrupt-build family).
+- Verification: `lint`/`typecheck`/`build` PASS (17 pages); smoke 5/5 200 with login form rendering. Live login with a real account NOT executed — retest steps in `docs/TESTING.md` AUTH-02a.

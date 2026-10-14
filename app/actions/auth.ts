@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,7 +10,7 @@ const authSchema = z.object({
 });
 
 export type AuthOutcome =
-  | { ok: true; confirmationSent: true }
+  | { ok: true; confirmationSent: boolean; redirectTo: string | null }
   | { ok: false; error: string };
 
 function friendlyError(message: string): string {
@@ -25,7 +24,10 @@ function friendlyError(message: string): string {
   return "Something went wrong. Please try again.";
 }
 
-/** Real Supabase signup. No session = email confirmation required (see notice). */
+/**
+ * Real Supabase signup. Returns a result object on EVERY path — never calls
+ * redirect() (see note below). No session = email confirmation required.
+ */
 export async function signUp(formData: FormData): Promise<AuthOutcome> {
   const parsed = authSchema.safeParse({
     email: String(formData.get("email") ?? ""),
@@ -40,12 +42,23 @@ export async function signUp(formData: FormData): Promise<AuthOutcome> {
   });
   if (error) return { ok: false, error: friendlyError(error.message) };
   // Email confirmation ON (project default) → no session until user clicks the link.
-  if (!data.session) return { ok: true, confirmationSent: true };
+  if (!data.session) return { ok: true, confirmationSent: true, redirectTo: null };
   revalidatePath("/", "layout");
-  redirect("/profile");
+  return { ok: true, confirmationSent: false, redirectTo: "/profile" };
 }
 
-/** Real Supabase login. */
+/**
+ * Real Supabase login. Returns a result object on EVERY path — never calls
+ * redirect() (see note below).
+ *
+ * NOTE (BUG-03): redirect() inside a Server Action throws a NEXT_REDIRECT
+ * signal. When the action is awaited imperatively from an event handler, the
+ * client dispatcher consumes the redirect response and the awaited promise
+ * resolves with `undefined` — so reading `outcome.ok` crashed with
+ * "Cannot read properties of undefined (reading 'ok')" precisely on
+ * successful login. Navigation now happens client-side from `redirectTo`,
+ * so no redirect signal is ever thrown or swallowed here.
+ */
 export async function signIn(formData: FormData): Promise<AuthOutcome> {
   const parsed = authSchema.safeParse({
     email: String(formData.get("email") ?? ""),
@@ -60,13 +73,13 @@ export async function signIn(formData: FormData): Promise<AuthOutcome> {
   });
   if (error) return { ok: false, error: friendlyError(error.message) };
   revalidatePath("/", "layout");
-  redirect("/profile");
+  return { ok: true, confirmationSent: false, redirectTo: "/profile" };
 }
 
-/** Real Supabase logout. */
-export async function signOut(): Promise<void> {
+/** Real Supabase logout. Returns the post-logout destination (same BUG-03 note). */
+export async function signOut(): Promise<{ redirectTo: string }> {
   const supabase = createClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
-  redirect("/login");
+  return { redirectTo: "/login" };
 }

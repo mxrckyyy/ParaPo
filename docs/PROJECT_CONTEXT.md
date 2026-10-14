@@ -100,6 +100,9 @@ tests (need user). Full log in `docs/TESTING.md` §5d. Phase 2 gate NOT yet met
 - Build bug found + fixed in Phase 1: `window is not defined` prerendering `/`
   and `/map` — `next/dynamic(ssr:false)` wrapper lacked a client boundary.
   Fixed by adding `"use client"` to `components/map/DemoMap.tsx`; build green after.
+- Login bug found + fixed (BUG-03, `docs/TESTING.md`): server-side `redirect()`
+  in auth actions resolved the awaited promise as `undefined`, crashing
+  `outcome.ok` on successful login. Actions now return `redirectTo`; client navigates.
 - Map tiles and 360px/1280px layouts NOT verified in a real browser (no headless
   browser tooling in this environment) — manual check recommended before deploy.
 - Blockers: privilege repair SQL run (PRIV-01); AUTH-02 browser tests (need user-owned test accounts); GitHub remote + Vercel need user auth; email-confirmation delivery unverified.
