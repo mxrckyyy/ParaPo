@@ -39,3 +39,9 @@ All significant changes by phase. Docs updated per Maintenance Rules; test claim
 - Committed `supabase/migrations/20261015000000_phase2_core_schema.sql` (7 tables, checks, trigram + partial-unique indexes, 3 SECURITY DEFINER functions with revokes, 15 RLS policies) + `seed.sql` + `verify-phase2.sql` — NOT APPLIED (needs user SQL Editor run; CREATE-only, no data risk).
 - Verification: `lint`/`typecheck`/`build` PASS (17 pages, dynamic where session-read); read-only connectivity PASS (GoTrue health, PGRST205 = tables absent, 400 on bad login); prod smoke 11/11 200 (1 transient 500, OPEN-03) + guest walls + live headers. NOT executed: migration apply, RLS matrix, real auth E2E, email delivery, `gen types`. Scans clean (no key/URL in tracked files; service-role never provided/used).
 - Decisions: demo-fallback data layer (app works pre- and post-migration); `getUser()`-verified identity everywhere, never client IDs; middleware refreshes but never gates (pages show login walls).
+
+## [Phase 2 verification] — 2026-10-15 — migration confirmed, anon RLS proven, repair prepared (gate not met)
+- User applied the core migration; REST confirms 7/7 tables resolve. Anon write-denial suite PASS (favorites + reports rejected with explicit 42501 RLS proof; routes + users writes 401).
+- Found: anon SELECT denied at privilege stage (empty 401) on `alerts` + `users` while siblings 200 — fail-closed, no vulnerability. Prepared additive-only `20261015000001_phase2_privilege_repair.sql` (GRANTs + diagnostic; RLS untouched) for the user's SQL Editor run. No policy text changed; RLS never disabled.
+- `lint`/`typecheck`/`build` PASS; prod smoke 11/11 200 vs migrated DB; no code defects found, no app-code changes needed.
+- NOT executed (need user): repair SQL run, AUTH-02 browser tests (signup/confirmation/login/persistence/logout/favorites E2E/owner isolation), `gen types`, browser visual. Phase 2 gate stays open until those land.

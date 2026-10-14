@@ -36,7 +36,7 @@ Out of MVP (Phase 4+): operator dashboard, direct GPS devices, push notification
 | Map | Leaflet + `react-leaflet`, OpenStreetMap tiles | leaflet 1.9.4 / react-leaflet 4.2.1, client-only via `dynamic(ssr:false)` |
 | Icons / validation | lucide-react, Zod | 0.441.0 / 3.25.76 |
 | Lint | ESLint | 8.57.1 + eslint-config-next 14.2.35 |
-| Backend (BaaS) | Supabase | WIRED Phase 2: project URL + publishable key in gitignored `.env.local`; browser/server clients live; middleware refreshes sessions; tables NOT created yet (migration pending user apply). supabase-js 2.117.3 / @supabase/ssr 0.5.2 |
+| Backend (BaaS) | Supabase | WIRED Phase 2: project URL + publishable key in gitignored `.env.local`; browser/server clients + middleware live; all 7 tables confirmed present; anon write-denials proven; privilege repair for alerts/users reads pending user SQL run. supabase-js 2.117.3 / @supabase/ssr 0.5.2 |
 | Hosting | Vercel (auto-deploy from GitHub) | Not connected (needs user auth) |
 | VCS | Git + GitHub | Local git repo initialized Phase 1 (no remote yet) |
 | Design | Figma (optional) | — |
@@ -44,35 +44,24 @@ Out of MVP (Phase 4+): operator dashboard, direct GPS devices, push notification
 
 No custom backend server. Frontend talks directly to Supabase via RLS-secured anon key; service-role key never ships to client.
 
-## 5. Implementation Status (2026-10-15, Phase 2 code done, migration pending)
+## 5. Implementation Status (2026-10-15, Phase 2 verification pass)
 - Phase 0: DONE. Phase 1: code complete locally, deploy pending.
-- Phase 2: application code COMPLETE, database NOT migrated (needs 2 minutes in
-  the Supabase SQL Editor — see MIGRATE-01 in `docs/TESTING.md` §6).
-  Implemented: `.env.local` (gitignored) with project URL + publishable key;
-  env standardized to `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; `middleware.ts`
-  session refresh; real signup/login/logout Server Actions with Zod validation,
-  friendly errors, confirmation-sent handling; session-aware nav + profile
-  (email, role, logout); owner-scoped favorites actions + list + star toggle
-  with honest setup-degraded states; live route search/detail via `lib/db.ts`
-  with demo fallback (Live badge vs Demo badge); hand-maintained
-  `types/database.ts`; migration `supabase/migrations/20261015000000_*`
-  (7 tables, constraints, trigram index, `is_admin`/`set_role`/`handle_new_user`,
-  RLS per schema doc) + `supabase/seed.sql` (SAMPLE rows) + `supabase/verify-phase2.sql`.
-  Connectivity verified read-only (GoTrue health, PGRST205 proves tables absent,
-  400 on bad login). RLS/auth E2E await migration + user-run flows.
-- Repo state: local git, no remote; Supabase connected but unmigrated; no Vercel.
+- Phase 2: code COMPLETE, migration APPLIED by user, verification IN PROGRESS.
+  Tables confirmed live (7/7 resolve); anon write-denials proven (favorites +
+  reports 42501, routes + users 401); app smoke 11/11 green against migrated DB.
+  Open: privilege repair for alerts/users reads (`..._privilege_repair.sql`
+  prepared, needs user SQL run); live auth/favorites session flows need the
+  user's browser + test accounts (`docs/TESTING.md` AUTH-02). No code defects
+  found; no policy text changed.
+- Repo state: local git, no remote; Supabase migrated (privilege repair pending); no Vercel.
 
 ## 6. Current Phase / Next Task / Outstanding Issues
-- Current phase: **Phase 2 — code complete, migration pending user action.**
-- Next task: **Apply the migration** (Dashboard → SQL Editor → paste
-  `supabase/migrations/20261015000000_phase2_core_schema.sql` → Run; then run
-  `supabase/verify-phase2.sql` and optionally `supabase/seed.sql`). After that:
-  sign up in the app, confirm email behavior, save a favorite — then approve
-  **Phase 3 Realtime & Crowdsourcing**. See `docs/IMPLEMENTATION_PLAN.md`.
+- Current phase: **Phase 2 verification — 2 user steps left (PRIV-01 SQL run, AUTH-02 browser tests).**
+- Next task: run the privilege-repair migration, then the AUTH-02 manual auth/favorites tests, report results — then Phase 2 can be marked complete and **Phase 3** approved. See `docs/TESTING.md` §6.
 - Outstanding issues / blockers:
-  1. MIGRATE-01: tables + RLS not applied (user SQL Editor step; file ready, non-destructive).
-  2. No GitHub remote / Vercel project — need user auth (Vercel will need the two `NEXT_PUBLIC_*` names).
-  3. Email-confirmation delivery unverified (depends on project mail settings).
+  1. PRIV-01: alerts/users reads denied at privilege stage (repair SQL ready, fail-closed meanwhile).
+  2. AUTH-02: session flows need user's browser (no headless tooling here; test accounts must be user-owned).
+  3. No GitHub remote / Vercel project — need user auth.
   4. Map tiles + responsive layouts not verified in a real browser.
 
 ## 7. Key Decisions + Reasons
@@ -101,11 +90,11 @@ npm run typecheck # tsc --noEmit (strict) — PASS 2026-10-15
 npm run build     # next build — PASS 2026-10-15 (17 static pages)
 npm start         # serve production build — verified, 11/11 routes HTTP 200
 ```
-Phase 2 results: lint/typecheck/build all green after minor fixes; Supabase
-connectivity verified read-only (GoTrue health, PGRST205 = tables absent,
-400 on bad login); prod smoke 11/11 routes 200 (1 transient 500, see OPEN-03)
-plus guest wall checks and live security-header verification. Full log in
-`docs/TESTING.md` §5c. RLS matrix + real auth flows await migration + user runs.
+Phase 2 verification: lint/typecheck/build green; tables confirmed live 7/7;
+anon write-denials proven (42501 on favorites/reports); prod smoke 11/11 + guest
+walls against migrated DB. Open: privilege repair SQL run + AUTH-02 browser
+tests (need user). Full log in `docs/TESTING.md` §5d. Phase 2 gate NOT yet met
+(RLS authenticated half + auth E2E unverified).
 
 ## 10. Known Bugs / Failed Tests / Blockers
 - Build bug found + fixed in Phase 1: `window is not defined` prerendering `/`
@@ -113,8 +102,8 @@ plus guest wall checks and live security-header verification. Full log in
   Fixed by adding `"use client"` to `components/map/DemoMap.tsx`; build green after.
 - Map tiles and 360px/1280px layouts NOT verified in a real browser (no headless
   browser tooling in this environment) — manual check recommended before deploy.
-- Blockers: migration apply (MIGRATE-01, user SQL Editor step); GitHub remote + Vercel need user auth; email-confirmation delivery unverified.
-- `docs/TESTING.md` §5c–§6 hold the full verified state; nothing is claimed green
+- Blockers: privilege repair SQL run (PRIV-01); AUTH-02 browser tests (need user-owned test accounts); GitHub remote + Vercel need user auth; email-confirmation delivery unverified.
+- `docs/TESTING.md` §5d–§6 hold the full verified state; nothing is claimed green
   that was not executed.
 
 ## 11. Context Recovery Procedure (mandatory every OpenCode session / reset)

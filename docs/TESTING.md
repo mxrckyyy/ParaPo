@@ -77,14 +77,40 @@ Environment: same as Phase 1. Supabase project configured via gitignored `.env.l
 - Secret scan — CLEAN: key material and project URL appear ONLY in untracked `.env.local`; tracked-file grep for `sb_publishable_[A-Za-z0-9_-]{10,}` and the project URL returns nothing; only `.env.example` (placeholders) is tracked. Service-role key: never provided, never used; `createAdminClient` remains unimported.
 - NOT EXECUTED: migration apply (needs SQL Editor access — file is ready for the user); RLS permission matrix (needs applied tables + test sessions — `supabase/verify-phase2.sql` provided for post-apply checks); real signup/login/logout E2E (would create auth users — left for the user); email-confirmation behavior (depends on project mail settings, unverified); `supabase gen types` (needs CLI login — hand-maintained `types/database.ts` used instead); browser visual.
 
+## 5d. Actual Results (Phase 2 verification, 2026-10-15 — migration applied by user)
+- `npm run lint` — PASS, no warnings/errors (no code changes since §5c).
+- `npm run typecheck` — PASS.
+- `npm run build` — PASS: "Compiled successfully", 17/17 static pages.
+- Tables confirmed live (read-only REST, anon key): `routes/stops/vehicles/reports/favorites` → 200 with 0 rows (tables exist; no seed rows yet); `alerts` + `users` SELECT → empty-401. Bad-column probe on `alerts` → 400 while a missing table → 404 PGRST205, proving the 401 happens at the privilege stage (table resolves, anon lacks table-level privilege) — recorded as OPEN-04, fail-closed (safe direction). No RLS bypass, no data touched.
+- Anon write-denial suite (nothing creatable, all correctly denied) — PASS:
+  `POST favorites` → 401 + `42501 new row violates row-level security policy` (RLS proven enforcing);
+  `POST reports` → 401 + same 42501 proof;
+  `POST routes` → 401 empty (no anon insert path by design);
+  `PATCH users` role → 401 (self-escalation impossible anonymously).
+- Prod smoke vs migrated DB (`npm start` + HTTP GET) — PASS: 11/11 routes 200, `/search` correctly stays in labeled demo mode (routes table empty), no OPEN-03 recurrence, no server-log errors.
+- Remediation prepared (NOT applied — needs user SQL Editor run): `supabase/migrations/20261015000001_phase2_privilege_repair.sql` (GRANTs only, idempotent, includes pre-run privilege diagnostic). Rationale in `docs/TESTING.md` §6 PRIV-01.
+- NOT EXECUTED (need a real browser + user-owned test accounts — steps in §6 AUTH-02): signup/email-confirmation behavior, login, session persistence across refresh, logout + wall return, invalid-login messaging in-app, favorites add/remove E2E, two-account owner isolation, authenticated role-escalation probe, `supabase gen types`, browser visual.
+
 ## 6. Defects / Unresolved
 - SETUP-01: RESOLVED Phase 1.
 - SETUP-02: still open (no GitHub remote; user push steps unchanged).
-- SETUP-03: PARTIAL — project URL + publishable key configured in gitignored `.env.local`; connectivity verified; tables NOT created (see MIGRATE-01).
-- MIGRATE-01 (USER ACTION REQUIRED): apply `supabase/migrations/20261015000000_phase2_core_schema.sql` in Dashboard → SQL Editor → Run; then run `supabase/verify-phase2.sql` (expects 7/7/15-policy/3-fn/1-trigger/2-extension rows); optionally run `supabase/seed.sql` for SAMPLE rows. No destructive risk: migration only CREATEs (plus one DROP+CREATE of its own trigger, idempotent via `drop trigger if exists`). Until applied: live-route sections stay in demo mode, favorites actions return an honest setup message, profile shows "row appears after migration".
-- RLS-01: RLS policies written per `docs/DATABASE_SCHEMA.md` §3 but NOT applied or tested (blocked on MIGRATE-01). Never disabled anything to bypass errors.
-- AUTH-01: signup/login/logout/profile/favorites code complete and typechecked; live user flow NOT executed (creates real auth rows). Email-confirmation path coded (confirmation notice) but mail delivery unverified.
-- VERCEL-01: still open. Note: Vercel will need `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` env vars (names only — values stay local).
+- SETUP-03: RESOLVED — env configured, connectivity verified, tables confirmed live (7/7 resolve via REST).
+- MIGRATE-01: RESOLVED — user applied `20261015000000_phase2_core_schema.sql` and reports `verify-phase2.sql` checks passed. REST confirms 7/7 tables exist; policies/functions per user's verify run (not independently observable via REST).
+- PRIV-01 (USER ACTION REQUIRED): anon SELECT denied (empty 401) on `alerts` + `users` while siblings allow it — privilege-stage denial, fail-closed. Fix prepared: run `supabase/migrations/20261015000001_phase2_privilege_repair.sql` (GRANTs only, idempotent, includes diagnostic query) in the SQL Editor, then re-check: anon `GET /rest/v1/alerts?select=id` should return 200. Until then, guests see demo alerts (app unaffected — alerts page is demo-scoped) but logged-in users may also miss live alerts/profile rows; no vulnerability either way.
+- RLS-01: PARTIAL — anon write-denials proven live (favorites + reports 42501, routes + users 401). Authenticated half of the matrix (own vs other's favorites/reports, admin paths) NOT executed — needs test sessions (AUTH-02). RLS never disabled; no policy text changed.
+- AUTH-01: code complete; live user flows NOT executed (would create real auth rows; needs user's browser).
+- AUTH-02 (USER MANUAL TESTS, `npm run dev` → http://localhost:3000):
+  1. Optional but recommended: run `supabase/seed.sql` first (SAMPLE routes enable the live-search + favorite tests).
+  2. `/signup` with a test email → record whether you get a session (redirect to `/profile`) or the green "check your email" notice (answers the email-confirmation question; do NOT share the password with anyone).
+  3. Same email again → expect "already registered" message.
+  4. `/login` with a wrong password → expect "Incorrect email or password."
+  5. Log in → nav shows Profile; open `/profile` (email + `commuter` badge after migration); refresh the page → still logged in (session persistence).
+  6. Log out → `/favorites` + `/profile` show login walls again.
+  7. Log in, open a Live-badged route (seeded SAMPLE), star it → `/favorites` lists it; remove it → list empties.
+  8. Second account in an incognito window + its own favorite → each account sees ONLY its own list (owner isolation). Never share credentials; just compare screens.
+  9. Report back which steps passed/failed; do NOT paste passwords, tokens, or JWTs anywhere.
+- VERCEL-01: still open (needs the two `NEXT_PUBLIC_*` names at deploy time).
 - OPEN-01 (browser visual), OPEN-02 (Prettier): unchanged.
-- OPEN-03: single transient 500 on `/routes/demo-sampaguita-loop` during rapid smoke hits; 6/6 clean after; cause undetermined, no log evidence. Revisit if it recurs.
+- OPEN-03: no recurrence in this pass (11/11 + route re-hits clean).
+- OPEN-04: alerts/users anon-401 anomaly (see PRIV-01). Fail-closed; repair prepared.
 - BUG-01, BUG-02: remain fixed/verified.

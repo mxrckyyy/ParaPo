@@ -27,12 +27,12 @@ Phases run in order. Do not start the next phase until its gate conditions are m
 - Deliverables: working login/signup, favorites persist, routes/stops/vehicles from DB, RLS tests pass for guest/commuter/admin.
 - Verification: auth flow E2E (signup→login→logout), favorites owner-isolation test, `supabase gen types` committed.
 - Gate: no mock imports remain on data paths; RLS matrix green. Depends on Phase 1 gate.
-- Status (2026-10-15): CODE COMPLETE, migration NOT applied. Env + clients +
-  middleware + real auth/favorites/profile/route-data code done; connectivity
-  verified read-only; migration + seed + verify SQL committed but need the user's
-  SQL Editor run. RLS matrix, auth E2E, and `gen types` blocked on that step.
-  Live-data paths fall back to labeled demo until tables exist (documented
-  intermediate state, not the gate).
+- Status (2026-10-15): CODE COMPLETE, migration APPLIED by user, verification IN PROGRESS.
+  Tables confirmed live 7/7; anon write-denials proven; app smoke green vs migrated DB.
+  Gate NOT met yet: privilege repair for alerts/users reads needs the user's SQL run
+  (`..._privilege_repair.sql` prepared), and auth E2E + authenticated RLS half need
+  user browser tests (`docs/TESTING.md` AUTH-02). Live-data paths stay in labeled
+  demo mode until seed/real rows exist.
 
 ## Phase 3 — Realtime & Crowdsourcing (Weeks 6–8)
 - Scope: Realtime channels for vehicles/reports/alerts; Report form + geolocation + Server Action + rate limit; "I'm on/off vehicle" sharing (throttled); `lib/eta.ts` range estimates; filters + legend + stale-dim.

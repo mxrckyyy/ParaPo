@@ -121,9 +121,12 @@ Test matrix in `docs/TESTING.md` covers guest/commuter/admin × each table.
 - Migrations: `supabase/migrations/YYYYMMDDHHMMSS_<name>.sql`, numbered, committed; never edit applied migrations — new migration to fix.
 - Phase 2 migration: `supabase/migrations/20261015000000_phase2_core_schema.sql`
   implements §1–§4 exactly (incl. trigram index, partial unique favorites indexes,
-  function revokes) — STATUS: committed, NOT APPLIED (needs user SQL Editor run;
-  non-destructive, CREATE-only). `supabase/seed.sql` (SAMPLE rows) and
-  `supabase/verify-phase2.sql` (read-only checks) accompany it.
+  function revokes) — STATUS: APPLIED by user (tables confirmed live 7/7 via REST;
+  policies/functions per user's `verify-phase2.sql` run). `supabase/seed.sql`
+  (SAMPLE rows) and `supabase/verify-phase2.sql` (read-only checks) accompany it.
+- Phase 2 repair (pending user run): `supabase/migrations/20261015000001_phase2_privilege_repair.sql`
+  — GRANTs only (anon SELECT on 5 public tables; authenticated working privileges
+  on all 7). RLS untouched and still the enforcer. See PRIV-01 in `docs/TESTING.md` §6.
 - Admin grant (secure, run in SQL editor or script with service-role, never client):
 ```sql
 update public.users set role='admin' where email='admin@example.com';
