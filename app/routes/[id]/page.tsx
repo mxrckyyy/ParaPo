@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DemoNotice } from "@/components/ui/DemoNotice";
 import { FavoriteButton } from "@/components/favorites/FavoriteButtons";
+import { ShareRideButton } from "@/components/vehicles/ShareRideButton";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyFavorites, getRouteDetail } from "@/lib/db";
+import { getMyFavorites, getRouteDetail, getVehiclesByRoute } from "@/lib/db";
+import { estimateEta, haversineKm, isStale } from "@/lib/eta";
 import { formatEtaRange, formatPeso } from "@/lib/format";
 import { DEMO_ROUTES } from "@/lib/mock";
 
@@ -28,6 +30,24 @@ export default async function RouteDetailPage({ params }: { params: { id: string
 
   const isDemo = route.source === "demo";
 
+  // Live ETA: nearest FRESH shared vehicle to the first published stop.
+  // No traffic feed exists (docs/SYSTEM_DESIGN.md §10) — always a labeled range.
+  let liveEta: string | null = null;
+  let freshVehicleCount = 0;
+  if (!isDemo && route.stops.length > 0) {
+    const sightings = await getVehiclesByRoute(route.id);
+    const fresh = sightings.filter((v) => !isStale(v.last_updated));
+    freshVehicleCount = fresh.length;
+    if (fresh.length > 0) {
+      const first = route.stops[0];
+      const nearest = Math.min(
+        ...fresh.map((v) => haversineKm(first.latitude, first.longitude, Number(v.latitude), Number(v.longitude))),
+      );
+      const eta = estimateEta(nearest);
+      liveEta = formatEtaRange(eta.minMinutes, eta.maxMinutes);
+    }
+  }
+
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <Link href="/search" className="text-sm font-semibold text-primary-dark hover:underline">
@@ -41,12 +61,24 @@ export default async function RouteDetailPage({ params }: { params: { id: string
 
       <Card className="flex flex-col gap-2 bg-asphalt text-white">
         <p className="text-sm text-white/70">
-          {isDemo ? "Illustrative travel time (not a real prediction)" : "Travel time"}
+          {isDemo ? "Illustrative travel time (not a real prediction)" : "Estimated arrival at first stop"}
         </p>
         {isDemo ? (
           <p className="text-3xl font-bold tabular-nums">{formatEtaRange(route.etaMin, route.etaMax)}</p>
+        ) : liveEta ? (
+          <>
+            <p className="text-3xl font-bold tabular-nums">{liveEta}</p>
+            <p className="text-xs text-white/70">
+              Estimate from {freshVehicleCount} shared vehicle(s) — no traffic data, unverified.
+            </p>
+          </>
         ) : (
-          <p className="text-xl font-bold">ETA with GPS data (Phase 3)</p>
+          <>
+            <p className="text-xl font-bold">No live vehicles yet</p>
+            <p className="text-xs text-white/70">
+              No active vehicles sharing this route yet — be the first to share 🚌
+            </p>
+          </>
         )}
         <p className="text-sm">
           {route.farePhp > 0 ? (
@@ -106,16 +138,24 @@ export default async function RouteDetailPage({ params }: { params: { id: string
         ) : (
           <FavoriteButton routeId={route.id} initialFavorited={initialFavorited} loggedIn={user !== null} />
         )}
+        {!isDemo && user ? <ShareRideButton routeId={route.id} /> : null}
+        {!isDemo && !user ? (
+          <Link href="/login">
+            <Button variant="secondary">
+              <Star className="h-4 w-4" aria-hidden="true" /> Log in to share your ride
+            </Button>
+          </Link>
+        ) : null}
         <Link href="/report">
           <Button variant="ghost">Report an issue on this route</Button>
         </Link>
       </div>
       <p className="text-xs text-asphalt-muted">
         {isDemo
-          ? "Demo routes can't be saved — favorites attach to verified routes once the database is set up. Reporting goes live in Phase 3."
+          ? "Demo routes can't be saved — favorites attach to verified routes."
           : user
-            ? "Saved to your account (owner-only, enforced by RLS)."
-            : "Log in to save this route to your favorites."}
+            ? "Saved to your account (owner-only, enforced by RLS). Shared sightings are anonymous and fade automatically."
+            : "Log in to save this route or share your ride."}
       </p>
     </div>
   );

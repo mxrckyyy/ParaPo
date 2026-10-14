@@ -14,7 +14,7 @@ const severityBorder: Record<DemoAlert["severity"], string> = {
   critical: "border-l-severity-critical",
 };
 
-export function AlertCard({ alert }: { alert: DemoAlert }) {
+export function AlertCard({ alert, demo = true }: { alert: DemoAlert; demo?: boolean }) {
   return (
     <Card className={`border-l-4 ${severityBorder[alert.severity]}`}>
       <div className="flex flex-wrap items-center gap-2">
@@ -23,7 +23,7 @@ export function AlertCard({ alert }: { alert: DemoAlert }) {
       <p className="mt-1 text-sm text-asphalt-muted">{alert.message}</p>
       <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-asphalt-muted">
         <Badge kind={alert.severity}>{severityLabel[alert.severity]}</Badge>
-        <Badge kind="demo">Demo</Badge>
+        {demo ? <Badge kind="demo">Demo</Badge> : <Badge kind="approved">Live</Badge>}
         <span>{alert.expiresText}</span>
       </p>
     </Card>

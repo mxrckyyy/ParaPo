@@ -21,10 +21,15 @@ export function MapView({
   center,
   vehicles,
   reports,
+  dimmedVehicleIds = [],
+  mapLabel = "Demonstration transport map of Metro Manila",
 }: {
   center: [number, number];
   vehicles: DemoVehicle[];
   reports: DemoReport[];
+  /** Stale (>5 min) sightings render dimmed with a "last seen" note. */
+  dimmedVehicleIds?: string[];
+  mapLabel?: string;
 }) {
   const tileUrl = useMemo(() => TILE_URL, []);
   return (
@@ -33,7 +38,7 @@ export function MapView({
       zoom={13}
       scrollWheelZoom
       className="h-full min-h-[320px] w-full"
-      aria-label="Demonstration transport map of Metro Manila"
+      aria-label={mapLabel}
     >
       <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url={tileUrl} />
       {vehicles.map((v) => (
@@ -41,10 +46,17 @@ export function MapView({
           key={v.id}
           center={[v.latitude, v.longitude]}
           radius={10}
-          pathOptions={{ color: "#ffffff", weight: 2, fillColor: vehicleColor(v.status), fillOpacity: 0.9 }}
+          pathOptions={{
+            color: "#ffffff",
+            weight: 2,
+            fillColor: vehicleColor(v.status),
+            fillOpacity: dimmedVehicleIds.includes(v.id) ? 0.3 : 0.9,
+          }}
         >
           <Tooltip direction="top" offset={[0, -10]}>
-            Demo vehicle ({v.status}) — static sample, not live.
+            {v.live
+              ? `Shared sighting (${v.status}) — community-reported, unverified.${v.lastSeen ? ` Last seen ${v.lastSeen}.` : ""}`
+              : `Demo vehicle (${v.status}) — static sample, not live.`}
           </Tooltip>
         </CircleMarker>
       ))}
@@ -62,7 +74,9 @@ export function MapView({
           }}
         >
           <Tooltip direction="top" offset={[0, -8]}>
-            Sample {r.type} report ({r.status}, unverified).
+            {r.live
+              ? `Community report (${r.type}, ${r.status}, unverified).`
+              : `Sample ${r.type} report (${r.status}, unverified).`}
           </Tooltip>
         </CircleMarker>
       ))}

@@ -44,25 +44,20 @@ Out of MVP (Phase 4+): operator dashboard, direct GPS devices, push notification
 
 No custom backend server. Frontend talks directly to Supabase via RLS-secured anon key; service-role key never ships to client.
 
-## 5. Implementation Status (2026-10-15, Phase 2 verification pass)
+## 5. Implementation Status (2026-10-15, Phase 4 code complete, deploy + live-verification pending)
 - Phase 0: DONE. Phase 1: code complete locally, deploy pending.
-- Phase 2: code COMPLETE, migration APPLIED by user, verification IN PROGRESS.
-  Tables confirmed live (7/7 resolve); anon write-denials proven (favorites +
-  reports 42501, routes + users 401); app smoke 11/11 green against migrated DB.
-  Open: privilege repair for alerts/users reads (`..._privilege_repair.sql`
-  prepared, needs user SQL run); live auth/favorites session flows need the
-  user's browser + test accounts (`docs/TESTING.md` AUTH-02). No code defects
-  found; no policy text changed.
-- Repo state: local git, no remote; Supabase migrated (privilege repair pending); no Vercel.
+- Phase 2: code COMPLETE (incl. BUG-03 login fix); user-verified login/logout/session/walls. Still open: PRIV-01 repair run, signup/confirmation + error paths, favorites E2E + isolation, `gen types`, browser visual.
+- Phase 3: code COMPLETE, live multi-client verification pending (RT-01 + session E2E open).
+- Phase 4: code COMPLETE, deploy + live-verification pending. Implemented: PWA manifest + generated PNG icons (placeholder branding) + hand-written SW (tile cache, shell precache, offline page, prod-only registration); admin moderation dashboard (login wall → not-permitted → pending queue approve/reject/delete + policy-hint empty state) with server-side `requireAdmin` on page + every action; alert publishing/removal + alerts center (severity filter, realtime, expiry filtering) + home banner; favorites links/dates + profile counts/links polish. New pending user SQL: `..._reports_admin_read` (RLS-02) alongside PRIV-01 + RT-01. `npm run test` 22/22; lint/typecheck/build + 15/15 smoke PASS. No FAILs.
+- Repo state: local git (Phase 2 audit + Phase 3 + Phase 4 changes uncommitted), origin/main exists; Supabase migrated (PRIV-01, RT-01, RLS-02 pending); no Vercel. Phase 5 must NOT start without explicit user approval.
 
 ## 6. Current Phase / Next Task / Outstanding Issues
-- Current phase: **Phase 2 verification — 2 user steps left (PRIV-01 SQL run, AUTH-02 browser tests).**
-- Next task: run the privilege-repair migration, then the AUTH-02 manual auth/favorites tests, report results — then Phase 2 can be marked complete and **Phase 3** approved. See `docs/TESTING.md` §6.
+- Current phase: **Phase 4 code complete — deploy + live verification pending; earlier manual checks carried over unchanged.**
+- Next task (user): RLS-02 + PRIV-01 + RT-01 SQL/Dashboard steps, then admin E2E (ADMIN-01), PWA/Browser checks (PWA-01), AUTH-02 + Phase 3 session tests; Vercel deploy (DEPLOY-01). See `docs/TESTING.md` §6.
 - Outstanding issues / blockers:
-  1. PRIV-01: alerts/users reads denied at privilege stage (repair SQL ready, fail-closed meanwhile).
-  2. AUTH-02: session flows need user's browser (no headless tooling here; test accounts must be user-owned).
-  3. No GitHub remote / Vercel project — need user auth.
-  4. Map tiles + responsive layouts not verified in a real browser.
+  1. RLS-02 + PRIV-01 + RT-01: user SQL/Dashboard steps (all fail-safe until applied).
+  2. ADMIN-01 + PWA-01 + AUTH-02 remainder + Phase 3 live session tests (need admin account, browsers, Vercel auth).
+  3. DEPLOY-01: no Vercel project — MVP "all on prod" gate unmet; no GitHub push from here (no auto-commit/push per instructions).
 
 ## 7. Key Decisions + Reasons
 1. **BaaS over custom server** — solo frontend dev, 8–12 week MVP; Supabase covers auth/DB/realtime without backend code.
@@ -90,11 +85,8 @@ npm run typecheck # tsc --noEmit (strict) — PASS 2026-10-15
 npm run build     # next build — PASS 2026-10-15 (17 static pages)
 npm start         # serve production build — verified, 11/11 routes HTTP 200
 ```
-Phase 2 verification: lint/typecheck/build green; tables confirmed live 7/7;
-anon write-denials proven (42501 on favorites/reports); prod smoke 11/11 + guest
-walls against migrated DB. Open: privilege repair SQL run + AUTH-02 browser
-tests (need user). Full log in `docs/TESTING.md` §5d. Phase 2 gate NOT yet met
-(RLS authenticated half + auth E2E unverified).
+Earlier (preserved): Phase 2 user login/logout/session/walls verified; anon RLS denials proven; Phase 3 unit 14/14 + smoke 12/12. Still open from those phases: PRIV-01, AUTH-02 remainder, RT-01, Phase 3 session E2E, `gen types`, browser visual.
+Phase 4: `npm run test` 22/22 PASS; lint/typecheck/build green; prod smoke 15/15 (manifest valid, admin wall, icons served). NOT executed: PWA install/Lighthouse, SW offline behavior, admin E2E, deploy (no prod URL). Full log in `docs/TESTING.md` §5h. Gates for Phases 2–4 remain open on manual verification — Phase 5 must not start without explicit approval.
 
 ## 10. Known Bugs / Failed Tests / Blockers
 - Build bug found + fixed in Phase 1: `window is not defined` prerendering `/`

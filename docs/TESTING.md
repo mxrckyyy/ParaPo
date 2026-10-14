@@ -99,28 +99,97 @@ Environment: same as Phase 1. Supabase project configured via gitignored `.env.l
 - BUILD-01 (found + fixed during this task): `next start` crashed on every request with `Cannot find module './vendor-chunks/@supabase.js'` — stale/corrupt `.next` output, not source code. Fixed by deleting `.next` and rebuilding; all routes 200 after. Likely same family as the earlier transient OPEN-03 500 (single unreproduced `/routes/[id]` 500); OPEN-03 now considered explained — a corrupt build artifact, resolved by clean rebuild, no recurrence since.
 - Live login with a real account NOT executed (needs the user's browser + own credentials) — exact retest steps in §6 AUTH-02a. No login success claimed.
 
-## 6. Defects / Unresolved
+## 5f. Actual Results (user browser tests, 2026-10-15 — existing account, localhost:3000)
+User-verified PASS (reported by the user; not independently observable here):
+- Login completed with NO runtime error (BUG-03 fix confirmed in real use).
+- No red error box during successful login.
+- Navigation to `/profile` worked (email displayed = server session read works logged-in).
+- Refreshing `/profile` preserved the session.
+- Logout returned to `/login`; `/favorites` + `/profile` required authentication after logout.
+NOT covered by this report (do not assume): signup/confirmation, error-message paths, favorites E2E, second-account isolation, privilege-repair run, seed run.
+- Re-run this pass: `lint` PASS · `typecheck` PASS · `build` PASS ("Compiled successfully", 17/17). No code changes since fd6f2b2.
+
+## 7. Phase 2 Acceptance Checklist (evidence-linked; code review alone never = PASS)
+### Authentication
+| Check | Status | Evidence |
+|---|---|---|
+| Login succeeds without crash or red box | PASS (user browser) | User report 2026-10-15; fix fd6f2b2 |
+| Profile navigation after login | PASS (user browser) | User report (email displayed) |
+| Session persists across refresh | PASS (user browser) | User report |
+| Logout → login page + walls on protected pages | PASS (user browser) | User report |
+| Server identity correct logged-out (walls) | PASS | Smoke tests §5c/§5d |
+| Server identity correct logged-in (email shown) | PASS (user browser) | User report |
+| Signup + email-confirmation behavior | NOT EXECUTED | AUTH-02 steps 2–3 |
+| Wrong-password / duplicate friendly errors | NOT EXECUTED | AUTH-02 steps 3–4 |
+### Database and RLS
+| Check | Status | Evidence |
+|---|---|---|
+| Migration applied, 7 tables present | PASS | User verify run + REST 7/7 resolve |
+| Constraints, indexes, functions, trigger as designed | PASS (user-reported) | User `verify-phase2.sql` run; not REST-observable |
+| RLS enabled on all 7 tables | PASS (user-reported) | Same verify run |
+| Anonymous users cannot write (favorites/reports/routes/users role) | PASS | REST denials §5d (42501 + 401s) |
+| Authenticated users limited to own records | NOT EXECUTED | Needs session tests |
+| Favorites isolated between two accounts | NOT EXECUTED | Needs 2 accounts (AUTH-02 step 8) |
+| Ordinary users cannot modify admin-only transport records | NOT EXECUTED (anon half proven) | Authenticated half needs a session |
+| Users cannot self-grant admin | NOT EXECUTED (anon half proven) | Authenticated probe needs a session |
+| Privilege repair applied + diagnostic checked | NOT EXECUTED | PRIV-01 file ready, awaiting user |
+### Favorites and reports
+| Check | Status | Evidence |
+|---|---|---|
+| Add/remove favorites with session | NOT EXECUTED | AUTH-02 steps 1+7 (run seed first) |
+| Report submission auth/validation | NOT EXECUTED | Phase 3 feature; Phase 2 ships preview only |
+### Verdict
+Phase 2 gate (IMPLEMENTATION_PLAN.md: RLS matrix green, no mocks on data paths) is NOT met: the authenticated RLS half, favorites E2E, isolation, signup/confirmation, and error-path tests are outstanding, and demo fallback is still active (routes table empty). No FAILs recorded; nothing marked PASS without evidence.
+### Remaining mandatory tests (exact steps)
+1. PRIV-01: SQL Editor → run `supabase/migrations/20261015000001_phase2_privilege_repair.sql` → confirm anon `GET /rest/v1/alerts?select=id` returns 200 (I can re-check on request). This also unblocks the `commuter` role badge on `/profile`.
+2. Seed (recommended): run `supabase/seed.sql` → `/search` should show Live-badged SAMPLE routes.
+3. AUTH-02 remainder in the browser: signup/confirmation behavior, duplicate + wrong-password messages, star/remove a Live favorite, second-account isolation (incognito). Never share credentials; never paste tokens.
+4. Report results per step → Phase 2 can then be marked COMPLETE.
+
+## 5g. Actual Results (Phase 3 implementation, 2026-10-15)
+- `npm run test` (Vitest 2.1.9, NEW harness) — PASS: 14/14 (`lib/eta.test.ts` 10: haversine zero/known-distance/symmetry, ETA range math, stale boundary/invalid; `lib/validations.test.ts` 4: report/vehicle schemas valid + hostile).
+- `npm run lint` — PASS, no warnings/errors. `npm run typecheck` — PASS.
+- `npm run build` — PASS: "Compiled successfully", 17/17 static pages (prerender executed all server data paths against the live project without errors). `/map` grew to 71.4 kB route JS (realtime client) — expected.
+- Prod smoke from a SINGLE clean server instance — PASS: 12/12 routes 200 (all 11 + second demo route); `/map` renders filter chips + Live badge; logged-out `/report` shows the login wall. Zero server-log errors.
+- Harness lesson (applies to OPEN-03 + BUILD-01): all previously observed `MODULE_NOT_FOUND` vendor-chunk failures were stale-server/port-contention artifacts of rapid kill→rebuild→restart smoke scripts (an old server kept :3000 while a newer build replaced `.next` under it), NOT product defects. With verified-single-instance discipline (port confirmed free before start), every run is clean. Vercel-style single-instance deploys are unaffected. No app-code change resulted.
+- NOT EXECUTED (need two browsers + user-owned sessions): two-client realtime propagation, report rate-limit live rejection, stale-vehicle dimming in a live browser, realtime latency on 4G, ride-share start/move/stop E2E, geolocation granted/denied paths, `supabase gen types`, browser visual. Realtime ALSO needs the user to expose tables: Dashboard → Database → Replication → enable `vehicles`, `reports` (and `alerts` later) for the `supabase_realtime` publication — else subscriptions report `paused` and the UI falls back to server-loaded markers (verified fallback path renders).
+
+## 5h. Actual Results (Phase 4 implementation, 2026-10-15)
+- `npm run test` — PASS: 22/22 (3 files: eta 10, validations 8 incl. new alert schemas, markers 6).
+- `npm run lint` — PASS. `npm run typecheck` — PASS (after 1 fix: `gateError` return type narrowed to the `ok:false` union member).
+- `node --check public/sw.js` + `scripts/gen-icons.mjs` — PASS (syntax valid).
+- `npm run build` — PASS: "Compiled successfully", 19/19 pages (`/manifest.webmanifest`, `/offline` added; prerender ran all server paths cleanly).
+- Prod smoke, verified single instance — PASS: 15/15 routes 200 (13 pages + manifest + sw.js + icon PNG); manifest body inspected raw = valid JSON (name, short_name, standalone, 3 icons incl. maskable); logged-out `/admin` shows the admin login wall.
+- Generated icons verified: PNG signatures + 192/512 dimensions correct (placeholder geometric branding, documented for replacement).
+- NOT EXECUTED (need browser/dashboard/Vercel): PWA installability + Lighthouse, SW install/update behavior offline, admin E2E (approve→visible / reject→hidden / alert publish→banner / expiry), two-client realtime (carried), Phase 2 manual remainder (carried, unchanged). No deploy performed — no prod URL claimed.
+- New pending user SQL (non-destructive): `20261015000002_reports_admin_read.sql` (widens reports SELECT with `is_admin()` so the moderation list works) alongside PRIV-01 + RT-01.
+
+## 6. Defects / Unresolved Realtime ALSO needs the user to expose tables: Dashboard → Database → Replication → enable `vehicles`, `reports` (and `alerts` later) for the `supabase_realtime` publication — else subscriptions report `paused` and the UI falls back to server-loaded markers (verified fallback path renders).
 - SETUP-01: RESOLVED Phase 1.
 - SETUP-02: still open (no GitHub remote; user push steps unchanged).
 - SETUP-03: RESOLVED — env configured, connectivity verified, tables confirmed live (7/7 resolve via REST).
 - MIGRATE-01: RESOLVED — user applied `20261015000000_phase2_core_schema.sql` and reports `verify-phase2.sql` checks passed. REST confirms 7/7 tables exist; policies/functions per user's verify run (not independently observable via REST).
 - PRIV-01 (USER ACTION REQUIRED): anon SELECT denied (empty 401) on `alerts` + `users` while siblings allow it — privilege-stage denial, fail-closed. Fix prepared: run `supabase/migrations/20261015000001_phase2_privilege_repair.sql` (GRANTs only, idempotent, includes diagnostic query) in the SQL Editor, then re-check: anon `GET /rest/v1/alerts?select=id` should return 200. Until then, guests see demo alerts (app unaffected — alerts page is demo-scoped) but logged-in users may also miss live alerts/profile rows; no vulnerability either way.
-- RLS-01: PARTIAL — anon write-denials proven live (favorites + reports 42501, routes + users 401). Authenticated half of the matrix (own vs other's favorites/reports, admin paths) NOT executed — needs test sessions (AUTH-02). RLS never disabled; no policy text changed.
+- RLS-01: PARTIAL — anon write-denials proven live (favorites + reports 42501, routes + users 401). Authenticated half of the matrix (own vs other's favorites/reports, admin paths) NOT executed — needs test sessions (AUTH-02). RLS never disabled; base policy text unchanged (only the additive ...00002 widening prepared).
+- RLS-02 (USER ACTION REQUIRED): run `supabase/migrations/20261015000002_reports_admin_read.sql` so admins can SELECT others' pending reports (base policy only exposes approved + own rows). Policy-widening only, no data changes, RLS stays enabled. Until applied, the moderation queue shows an empty-state hint instead of real rows.
+- ADMIN-01 (USER BROWSER TESTS): with an admin account (bootstrap via `DATABASE_SCHEMA.md` §4 grant, then `set_role`), verify pending→approve appears on `/map`, reject hides, alert publish shows banner + `/alerts`, expired alert hidden, non-admin sees "Not permitted", logged-out sees login wall.
+- PWA-01 (USER BROWSER TESTS): installability prompt + Lighthouse PWA check; offline `/offline` fallback; tile caching on flaky network.
+- DEPLOY-01 (USER ACTION REQUIRED): Vercel project from the GitHub repo with `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (+ optional tile URL); no prod URL exists until then — MVP "all on prod" gate criterion is unmet by definition.
 - AUTH-01: code complete; live user flows NOT executed (would create real auth rows; needs user's browser).
-- AUTH-02 (USER MANUAL TESTS, `npm run dev` → http://localhost:3000):
-  1. Optional but recommended: run `supabase/seed.sql` first (SAMPLE routes enable the live-search + favorite tests).
-  2. `/signup` with a test email → record whether you get a session (redirect to `/profile`) or the green "check your email" notice (answers the email-confirmation question; do NOT share the password with anyone).
-  3. Same email again → expect "already registered" message.
-  4. `/login` with a wrong password → expect "Incorrect email or password."
-  5. Log in → nav shows Profile; open `/profile` (email + `commuter` badge after migration); refresh the page → still logged in (session persistence).
-  6. Log out → `/favorites` + `/profile` show login walls again.
-  7. Log in, open a Live-badged route (seeded SAMPLE), star it → `/favorites` lists it; remove it → list empties.
-  8. Second account in an incognito window + its own favorite → each account sees ONLY its own list (owner isolation). Never share credentials; just compare screens.
-  9. Report back which steps passed/failed; do NOT paste passwords, tokens, or JWTs anywhere.
+- AUTH-02a: COMPLETE — user verified login (no crash, no red box), profile nav + email, refresh persistence, logout + walls (2026-10-15).
+- AUTH-02 (remaining USER MANUAL TESTS, `npm run dev` → http://localhost:3000):
+  1. Optional but recommended: run `supabase/seed.sql` first (SAMPLE routes enable the live-search + favorite tests below).
+  2. `/signup` with a test email → record session-redirect vs green "check your email" notice (answers email-confirmation; do NOT share the password).
+  3. Same email again → expect "already registered"; `/login` with wrong password → expect "Incorrect email or password."
+  4. Log in, open a Live-badged route (seeded SAMPLE), star it → `/favorites` lists it; remove it → list empties.
+  5. Second account in an incognito window + its own favorite → each account sees ONLY its own list (owner isolation). Never share credentials; just compare screens.
+  6. Report back which steps passed/failed; do NOT paste passwords, tokens, or JWTs anywhere.
 - VERCEL-01: still open (needs the two `NEXT_PUBLIC_*` names at deploy time).
 - OPEN-01 (browser visual), OPEN-02 (Prettier): unchanged.
-- OPEN-03: closed — attributed to the corrupt-build family (see BUILD-01); clean rebuild + repeated hits show no recurrence.
-- OPEN-04: alerts/users anon-401 anomaly (see PRIV-01). Fail-closed; repair prepared.
+- OPEN-03: closed — reattributed to harness port-contention (see §5g harness lesson), not a product defect.
+- BUILD-01 (reclassified, not a product defect): the `vendor-chunks` MODULE_NOT_FOUND crashes recurred and were traced to stale servers holding :3000 while newer builds replaced `.next` underneath (see §5g). Single-instance runs are clean; no app-code change.
+- RT-01 (USER ACTION REQUIRED for live updates): expose `vehicles` + `reports` (+ `alerts` in Phase 4) in Dashboard → Database → Replication for the `supabase_realtime` publication. Until then the map shows server-loaded markers with a "paused" badge — verified working fallback, no errors.
+- OPEN-04: alerts/users anon-401 anomaly (see PRIV-01). Fail-closed; repair prepared, still awaiting user run.
 - BUG-03 (fixed): login crash `TypeError: Cannot read properties of undefined (reading 'ok')` in `AuthForm.tsx`. Root cause: `signIn`/`signUp` ended with server-side `redirect()`, which throws NEXT_REDIRECT; when awaited imperatively from the submit handler, the client dispatcher consumes the redirect and the promise resolves `undefined` — so the crash hit exactly on successful login. Fix: actions now return `{ ok, confirmationSent, redirectTo }` on every path (no `redirect()` in actions; nothing thrown or swallowed); `AuthForm` navigates via `router.push(redirectTo)` + `router.refresh()`; same pattern applied to `signOut`/`LogoutButton`; defensive `if (!outcome)` guard added as backstop only. Zod, Supabase calls, friendly errors, and confirmation flow unchanged. Verified by lint/typecheck/build + smoke; live login still needs AUTH-02a.
 - BUILD-01 (fixed): corrupt `.next` output crashed `next start` (`Cannot find module './vendor-chunks/@supabase.js'`). Fixed by clean rebuild; all routes 200.
 - AUTH-02a (USER LOGIN RETEST — `npm run dev` → http://localhost:3000, use your existing account, never share the password):

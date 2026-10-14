@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bell, Map as MapIcon, Search } from "lucide-react";
 import { AlertCard, ReportCard } from "@/components/alerts/AlertCards";
+import { AlertBanner } from "@/components/alerts/AlertBanner";
 import { DemoMap } from "@/components/map/DemoMap";
 import { MapLegend } from "@/components/map/MapLegend";
 import { SearchPanel } from "@/components/search/SearchPanel";
@@ -8,14 +9,17 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DemoNotice } from "@/components/ui/DemoNotice";
 import { DEMO_ALERTS, DEMO_REPORTS, DEMO_VEHICLES, METRO_MANILA_CENTER } from "@/lib/mock";
-import { getRouteSummaries } from "@/lib/db";
+import { getLiveAlerts, getRouteSummaries } from "@/lib/db";
+import { toAlertItem } from "@/lib/markers";
 
 export default async function HomePage() {
   const { routes: liveRoutes, source } = await getRouteSummaries();
   const liveAvailable = source === "supabase";
+  const { rows: liveAlerts, available: alertsLive } = await getLiveAlerts(10);
   return (
     <div className="flex flex-col gap-8">
       <DemoNotice />
+      {alertsLive ? <AlertBanner alerts={liveAlerts.map(toAlertItem)} /> : null}
 
       {/* Hero */}
       <section className="flex flex-col gap-4 rounded-2xl bg-asphalt px-6 py-10 text-white md:px-10" aria-labelledby="hero-heading">

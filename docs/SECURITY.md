@@ -16,8 +16,9 @@
 
 ## 4. Server-Side Permission Checks
 - `/admin` layout + each admin action re-checks `is_admin()` server-side (cookie session), even though RLS also blocks.
-- Mutations verify `auth.uid()` ownership (reports/favorites); rate limits enforced server-side (report 1/30s/user; vehicle update 1/10s/client) — client throttling is UX, server check is control.
-- Service-role client (`lib/supabase/admin.ts`) only in Route Handlers/scripts; lint rule / code review must reject client imports of it.
+- Mutations verify `auth.uid()` ownership (reports/favorites); rate limits enforced server-side — implemented Phase 3: report 1/30 s per user (`app/actions/reports.ts`), vehicle update 1/10 s per row (`app/actions/vehicles.ts`) — client throttling is UX, server checks are control.
+- Service-role client (`lib/supabase/admin.ts`) only in Route Handlers/scripts; lint rule / code review must reject client imports of it. (Still unimported; no service-role key ever provided.)
+- Admin authorization (Phase 4): `lib/admin.ts requireAdmin()` re-checks the caller's own `users` row for `role='admin'` on the admin page AND inside every admin action; UI gating (login wall / not-permitted card) is UX only. First admin still bootstrapped via the §4 SQL grant, then `set_role`.
 
 ## 5. Input Validation / Output Handling
 - Zod schemas (`lib/validations.ts`): enums for type/status/severity/role; lat/lng ranges; desc ≤500, alert message ≤1000; fare ≥0.
@@ -25,7 +26,7 @@
 
 ## 6. Rate Limiting / Abuse Prevention
 - MVP: server timestamp checks (reports, vehicle updates); admin delete + `rejected` status for spam; future: Supabase rate limits / Upstash sliding window + report votes + auto-hide threshold.
-- Realtime: one channel per table per view; vehicle payloads minimal (id, route_id, lat, lng, status, last_updated); throttle 10–15s.
+- Realtime: one channel per table per view (`hooks/useRealtimeTable.ts`); vehicle payloads minimal (id, route_id, lat, lng, status, last_updated); client ~15 s / server 10 s throttle. Subscriptions are subscriber-scoped: anon receives only RLS-visible rows (approved reports, public vehicles) — realtime cannot leak what REST denies.
 
 ## 7. Privacy (Personal + Location)
 - `vehicles` rows carry no `user_id`; recommend ~4-decimal precision; stale (>5 min) hidden/purged; explicit start/stop consent pill for sharing.

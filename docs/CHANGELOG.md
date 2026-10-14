@@ -51,3 +51,21 @@ All significant changes by phase. Docs updated per Maintenance Rules; test claim
 - Fix: actions return `{ ok, confirmationSent, redirectTo }` on every path (no `redirect()` calls, nothing thrown or swallowed); `AuthForm` navigates via `router.push` + `router.refresh()` with a defensive `if (!outcome)` backstop; same pattern for `signOut`/`LogoutButton`. Validation, Supabase flow, friendly errors, confirmation path unchanged.
 - Also fixed BUILD-01 (corrupt `.next` vendor chunk broke `next start`; clean rebuild) and closed OPEN-03 (same corrupt-build family).
 - Verification: `lint`/`typecheck`/`build` PASS (17 pages); smoke 5/5 200 with login form rendering. Live login with a real account NOT executed — retest steps in `docs/TESTING.md` AUTH-02a.
+
+## [Phase 3] — 2026-10-15 — realtime + crowdsourcing code complete, live-verification pending (Phase 2 manual checks kept open)
+- Added `lib/eta.ts` (haversine, ETA ranges, 5-min stale rule) + Vitest harness (`npm run test`, 14/14 PASS incl. haversine fixtures, boundary + hostile validation cases).
+- Added `app/actions/reports.ts` (Zod, verified identity, 30 s server rate limit, pending-by-default) and `app/actions/vehicles.ts` (anonymous start/move/stop, 10 s server throttle); upgraded `ReportForm` (geolocation + manual coords, guests walled) and added `ShareRideButton` (consent pill, denial states).
+- Added `hooks/useRealtimeTable.ts` (one channel/table, id-dedupe, paused fallback) + `LiveMap` (type filters, stale-dim, pending-dashed, list alternative); `/map` serves live markers with demo fallback; verified routes show live ETA ranges.
+- No schema change (all columns existed) — no new migration. RLS untouched; realtime subscriptions are subscriber-scoped (anon sees only RLS-visible rows).
+- Verification: unit 14/14, lint/typecheck/build, 12/12 smoke PASS. NOT executed: two-client realtime, live rate-limit/stale/share/geolocation E2E, 4G latency, RT-01 exposure, Phase 2 manual remainder. Harness port-contention lesson recorded (OPEN-03/BUILD-01 non-defects). No zero-bug claim; Phase 4 not started.
+
+## [Phase 4] — 2026-10-15 — PWA + admin moderation + alerts center code complete, deploy pending (earlier manual checks kept open)
+- PWA: `app/manifest.ts` (standalone, theme, 3 icons) + generated `public/icons/*.png` (verified PNG signatures/dimensions; placeholder geometric branding, replace before launch) + `app/apple-icon.svg` + hand-written `public/sw.js` (tile cache-first capped at 200, shell precache, offline fallback; `node --check` clean) + `app/offline` page + prod-only `ServiceWorkerRegister`.
+- Admin: `lib/admin.ts requireAdmin` gate + `app/actions/admin.ts` (pending list, approve/reject/delete, alert publish/delete — every action re-checks admin) + dashboard rewrite (login wall → not-permitted → queue + alert manager). Found + documented: base reports SELECT policy hides others' pending rows from admins → prepared `20261015000002_reports_admin_read.sql` (additive, user applies).
+- Alerts center: `getLiveAlerts` (expiry-filtered) + `AlertsLive` (severity filter, realtime) + home `AlertBanner`; `/alerts` serves live rows or labeled samples. Favorites link to routes + saved dates; profile shows counts + links.
+- Verification: unit 22/22, lint/typecheck/build, 15/15 smoke (manifest valid JSON, admin wall, assets served) PASS. NOT executed: Lighthouse/PWA install, SW offline, admin E2E (ADMIN-01 steps), deploy — no prod URL claimed. Phase 2/3 manual items preserved NOT EXECUTED. No zero-bug claim; Phase 5 not started.
+
+## [Phase 2 audit] — 2026-10-15 — user browser login tests PASS, gate honestly held open
+- Recorded user-verified PASS: login without crash or red box (BUG-03 fix confirmed in real use), profile nav + email, refresh persistence, logout + walls. Authenticated-sessions code path now proven both directions (logged-in email + logged-out walls).
+- Added `docs/TESTING.md` §7 acceptance checklist (PASS / NOT EXECUTED per criterion, evidence-linked). No FAILs; nothing passed without evidence. Still NOT EXECUTED: signup/confirmation, error-message paths, favorites E2E, two-account isolation, authenticated RLS half, PRIV-01 repair run, `gen types`, browser visual.
+- Verification this pass: `lint`/`typecheck`/`build` re-run green (no code changes). Phase 2 stays OPEN per its gate; Phase 3 not started.

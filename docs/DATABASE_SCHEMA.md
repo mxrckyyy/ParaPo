@@ -127,6 +127,11 @@ Test matrix in `docs/TESTING.md` covers guest/commuter/admin × each table.
 - Phase 2 repair (pending user run): `supabase/migrations/20261015000001_phase2_privilege_repair.sql`
   — GRANTs only (anon SELECT on 5 public tables; authenticated working privileges
   on all 7). RLS untouched and still the enforcer. See PRIV-01 in `docs/TESTING.md` §6.
+- Phase 4 admin-read (pending user run): `supabase/migrations/20261015000002_reports_admin_read.sql`
+  — widens reports SELECT with `or public.is_admin()` so moderators can list others'
+  pending rows (base policy exposes approved + own only). Policy-only change, no data
+  changes, RLS stays enabled. See RLS-02 in `docs/TESTING.md` §6.
+- Phase 3: NO schema change required — `vehicles`/`reports` columns already cover sharing + reporting (verified against this doc before coding). No new migration file.
 - Admin grant (secure, run in SQL editor or script with service-role, never client):
 ```sql
 update public.users set role='admin' where email='admin@example.com';

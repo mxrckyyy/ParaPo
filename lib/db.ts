@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { DEMO_ROUTES } from "@/lib/mock";
 import type { DemoRoute } from "@/types";
-import type { DbFavorite, DbRoute, DbStop } from "@/types/database";
+import type { DbAlert, DbFavorite, DbReport, DbRoute, DbStop, DbVehicle } from "@/types/database";
 
 export type DataSource = "supabase" | "demo";
 
@@ -79,6 +79,74 @@ export async function getRouteDetail(id: string): Promise<LiveRoute | null> {
 export interface FavoritesResult {
   favorites: (DbFavorite & { routeName: string | null })[];
   setupPending: boolean;
+}
+
+/** Live vehicle sightings for the map (newest first). Empty when unavailable. */
+export async function getLiveVehicles(limit = 100): Promise<{ rows: DbVehicle[]; available: boolean }> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("vehicles")
+      .select("id,route_id,latitude,longitude,last_updated,status")
+      .neq("status", "inactive")
+      .order("last_updated", { ascending: false })
+      .limit(limit);
+    if (error || !data) return { rows: [], available: false };
+    return { rows: data as DbVehicle[], available: true };
+  } catch {
+    return { rows: [], available: false };
+  }
+}
+
+/** Live reports for the map (approved + own pending handled by RLS, newest first). */
+export async function getLiveReports(limit = 100): Promise<{ rows: DbReport[]; available: boolean }> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("reports")
+      .select("id,user_id,type,latitude,longitude,description,created_at,status")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error || !data) return { rows: [], available: false };
+    return { rows: data as DbReport[], available: true };
+  } catch {
+    return { rows: [], available: false };
+  }
+}
+
+/** Active vehicles on one route (for live ETA on the details page). */
+export async function getVehiclesByRoute(routeId: string): Promise<DbVehicle[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("vehicles")
+      .select("id,route_id,latitude,longitude,last_updated,status")
+      .eq("route_id", routeId)
+      .eq("status", "active")
+      .order("last_updated", { ascending: false })
+      .limit(20);
+    if (error || !data) return [];
+    return data as DbVehicle[];
+  } catch {
+    return [];
+  }
+}
+
+/** Non-expired alerts for the alerts center (newest first). */
+export async function getLiveAlerts(limit = 50): Promise<{ rows: DbAlert[]; available: boolean }> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("alerts")
+      .select("id,title,message,severity,created_at,expires_at")
+      .or("expires_at.is.null,expires_at.gt.now()")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error || !data) return { rows: [], available: false };
+    return { rows: data as DbAlert[], available: true };
+  } catch {
+    return { rows: [], available: false };
+  }
 }
 
 /** Owner-scoped favorites. setupPending=true when the migration isn't applied. */

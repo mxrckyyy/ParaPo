@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FavoritesSetupNotice, RemoveFavoriteButton } from "@/components/favorites/FavoriteButtons";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -39,9 +40,21 @@ export default async function FavoritesPage() {
           {favorites.map((f) => (
             <li key={f.id}>
               <Card className="flex items-center justify-between gap-2">
-                <p className="text-sm font-semibold text-asphalt">
-                  {f.routeName ?? "Saved stop"}
-                </p>
+                <div className="flex min-w-0 flex-col">
+                  {f.route_id ? (
+                    <Link
+                      href={`/routes/${f.route_id}`}
+                      className="truncate text-sm font-semibold text-primary-dark hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                    >
+                      {f.routeName ?? "Saved route"}
+                    </Link>
+                  ) : (
+                    <p className="text-sm font-semibold text-asphalt">{f.routeName ?? "Saved stop"}</p>
+                  )}
+                  <p className="text-xs text-asphalt-muted">
+                    Saved {new Date(f.created_at).toLocaleDateString()}
+                  </p>
+                </div>
                 <RemoveFavoriteButton favoriteId={f.id} />
               </Card>
             </li>

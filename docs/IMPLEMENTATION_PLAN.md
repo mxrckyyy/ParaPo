@@ -27,24 +27,26 @@ Phases run in order. Do not start the next phase until its gate conditions are m
 - Deliverables: working login/signup, favorites persist, routes/stops/vehicles from DB, RLS tests pass for guest/commuter/admin.
 - Verification: auth flow E2E (signup→login→logout), favorites owner-isolation test, `supabase gen types` committed.
 - Gate: no mock imports remain on data paths; RLS matrix green. Depends on Phase 1 gate.
-- Status (2026-10-15): CODE COMPLETE, migration APPLIED by user, verification IN PROGRESS.
-  Tables confirmed live 7/7; anon write-denials proven; app smoke green vs migrated DB.
-  Gate NOT met yet: privilege repair for alerts/users reads needs the user's SQL run
-  (`..._privilege_repair.sql` prepared), and auth E2E + authenticated RLS half need
-  user browser tests (`docs/TESTING.md` AUTH-02). Live-data paths stay in labeled
-  demo mode until seed/real rows exist.
+- Status (2026-10-15): CODE COMPLETE (incl. BUG-03 login fix fd6f2b2), migration APPLIED by user, verification PARTIAL.
+  User-verified: login without crash/error, profile nav + email, refresh persistence, logout + walls.
+  Gate NOT met yet: privilege repair needs the user's SQL run (PRIV-01), and signup/confirmation, error paths, favorites E2E, two-account isolation, and the authenticated RLS half need user browser tests (`docs/TESTING.md` AUTH-02 + §7). Live-data paths stay in labeled demo mode until seed/real rows exist. Phase 3 must not start without explicit approval.
 
 ## Phase 3 — Realtime & Crowdsourcing (Weeks 6–8)
 - Scope: Realtime channels for vehicles/reports/alerts; Report form + geolocation + Server Action + rate limit; "I'm on/off vehicle" sharing (throttled); `lib/eta.ts` range estimates; filters + legend + stale-dim.
 - Deliverables: live pins/markers across two browsers; ETA range on route page; pending-vs-approved styling.
 - Verification: two-client realtime test, report rate-limit test, ETA unit tests (haversine fixtures), stale-vehicle hiding test.
 - Gate: realtime latency acceptable on 4G; no duplicate-marker bugs. Depends on Phase 2 gate.
+- Status (2026-10-15): CODE COMPLETE, live-verification pending (explicitly proceeding with Phase 2 manual checks still open, per user instruction — they stay NOT EXECUTED).
+  Implemented: realtime hook + LiveMap (dedupe merge, filters, stale-dim, pending-dashed, paused fallback); report action (30 s server limit) + geolocation form (manual-coords fallback, guests walled); anonymous ride sharing (10 s server throttle) + consent pill; `lib/eta.ts` + 14/14 Vitest PASS; live ETA ranges on verified routes. Verification: ETA unit tests PASS (haversine fixtures); lint/typecheck/build + 12/12 smoke PASS. NOT executed: two-client propagation, live rate-limit/stale/share/geolocation E2E, 4G latency, `gen types`, browser visual. RT-01 (Replication exposure) also pending user. Gate NOT met.
 
 ## Phase 4 — PWA & Polish + Deploy (Weeks 9–12)
 - Scope: manifest + icons + service worker (app shell + tile cache), alerts center + admin moderation dashboard + alert CRUD, favorites/profile polish, user testing + bugfix, production Vercel deploy + env checklist.
 - Deliverables: installable PWA (Lighthouse PWA pass), admin can approve/reject + publish alerts, prod URL + CHANGELOG release entry.
 - Verification: Lighthouse (PWA + perf smoke), admin E2E (pending→approved visible; rejected hidden; alert expiry), `next build` clean.
 - Gate: MVP acceptance: guest map+search, commuter report+favorite+share, admin moderate+alert, all on prod. Depends on Phase 3 gate.
+- Status (2026-10-15): CODE COMPLETE, deploy + live-verification pending (Phase 2/3 manual checks kept open per instructions).
+  Implemented: PWA manifest + generated icons + hand SW + offline page + prod-only registration; admin dashboard (gated page + 5 admin actions, policy-hint empty state); alert CRUD + alerts center (filter, realtime, expiry) + home banner; favorites/profile polish. New pending user SQL: RLS-02 (reports admin-read widening) alongside PRIV-01 + RT-01.
+  Verification: unit 22/22, lint/typecheck/build, 15/15 smoke (manifest valid, admin wall, assets served) PASS. NOT executed: Lighthouse/PWA install, SW offline, admin E2E, deploy — no prod URL, so the "all on prod" gate criterion is unmet. Phase 5 not started.
 
 ## Phase 5+ — Future (out of MVP)
 Operator dashboard, GPS-device ingest, push notifications, fare-matrix calculator, full offline outbox, votes on reports, i18n (Tagalog). Each needs its own plan amendment + migration + doc updates.

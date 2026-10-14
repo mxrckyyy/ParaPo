@@ -53,14 +53,14 @@ Actual state 2026-10-15 (Phase 1): scaffold exists. Real tree (flat, no `src/`):
 ├── app/
 │   ├── page.tsx                  # Landing (hero, demo map preview, search, samples)
 │   ├── layout.tsx / globals.css / icon.svg
-│   ├── map/page.tsx              # Full demo map + legend + list alternative
+│   ├── map/page.tsx              # Live map + demo fallback (Phase 3)
 │   ├── search/page.tsx           # SearchPanel (mock filter, validation, empty state)
-│   ├── routes/[id]/page.tsx      # Route details (SSG ×3 demo routes, illustrative ETA)
-│   ├── report/page.tsx           # ReportForm preview (saves nothing — Phase 3)
+│   ├── routes/[id]/page.tsx      # Route details (SSG ×3 demo routes, illustrative ETA; live ETA + ride sharing — Phase 3)
+│   ├── report/page.tsx           # Login-gated community report form (Phase 3)
 │   ├── alerts/page.tsx           # Sample alert cards
 │   ├── favorites/page.tsx + profile/page.tsx  # LoginWall (auth — Phase 2)
 │   ├── login/page.tsx + signup/page.tsx       # AuthForm layouts (no auth — Phase 2)
-│   └── admin/page.tsx            # Demo shell (moderation — Phase 4)
+│   └── admin/page.tsx            # Gated moderation dashboard (Phase 4)
 ├── components/
 │   ├── ui/ (Button, Input, Card, Badge, EmptyState, LoginWall, DemoNotice)
 │   ├── layout/ (Navbar client w/ session-aware links + skip link, Footer)
@@ -71,15 +71,20 @@ Actual state 2026-10-15 (Phase 1): scaffold exists. Real tree (flat, no `src/`):
 │   ├── favorites/ (FavoriteButton, RemoveFavoriteButton, FavoritesSetupNotice)
 ├── app/actions/ (auth.ts signup/login/logout, favorites.ts toggle/remove — Phase 2)
 ├── middleware.ts (Supabase session refresh — Phase 2)
-├── lib/ (mock.ts fictional data, validations.ts Zod, format.ts, auth.ts session helpers, db.ts live-with-demo-fallback)
+├── lib/ (mock.ts fictional data, validations.ts Zod, format.ts, auth.ts session helpers, db.ts live-with-demo-fallback, eta.ts estimates + tests, markers.ts presentation mappers)
+├── hooks/useRealtimeTable.ts (one channel/table, id-dedupe, paused fallback — Phase 3)
+├── app/actions/ (+ reports.ts 30 s-limited submit, vehicles.ts throttled share, admin.ts gated moderation/alerts — Phase 3/4)
+├── lib/admin.ts requireAdmin gate (Phase 4)
+├── components/map/ (+ LiveMap.tsx filters/stale-dim/list — Phase 3) · components/vehicles/ShareRideButton.tsx (Phase 3)
+├── components/admin/ (ModerationQueue, AlertManager — Phase 4) · components/alerts/ (+ AlertsLive, AlertBanner — Phase 4) · components/pwa/ServiceWorkerRegister.tsx (Phase 4)
+├── app/ (+ manifest.ts, apple-icon.svg, offline/ — Phase 4) · public/ (sw.js, icons/ generated placeholders — Phase 4) · scripts/gen-icons.mjs (Phase 4)
 ├── lib/supabase/ (client.ts, server.ts — publishable key; admin.ts service-role, unimported)
 ├── types/ (index.ts demo shapes, database.ts hand-maintained rows — Phase 2)
-├── supabase/ (migrations/20261015000000_phase2_core_schema.sql NOT APPLIED, seed.sql, verify-phase2.sql — Phase 2)
+├── supabase/ (migrations/20261015000000_* APPLIED by user, ...00001_privilege_repair pending user run, seed.sql, verify-phase2.sql)
 ├── tailwind.config.ts (palette #16A34A/#0F172A/#F59E0B) · .env.example (PUBLISHABLE_KEY names)
 └── docs/ (the 9 permanent docs)
 ```
-Deferred to later phases (still per plan): `app/api/`, `hooks/`,
-`e2e/`, PWA manifest, Realtime subscriptions, report/vehicle mutations (Phase 3+).
+Deferred to later phases (still per plan): `app/api/`, `e2e/`, PWA manifest, alerts live wiring (Phase 4 with admin CRUD). `vitest.config.ts` + `npm run test` added in Phase 3.
 
 ## 2. Responsibilities
 - `app/` — routing + layouts; Server Components fetch initial data (SEO, fast paint); client components isolated to map/realtime/forms.

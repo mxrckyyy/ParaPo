@@ -1,8 +1,11 @@
+import Link from "next/link";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LoginWall } from "@/components/ui/LoginWall";
 import { getCurrentProfile, getCurrentUser } from "@/lib/auth";
+import { getMyFavorites } from "@/lib/db";
 
 export const metadata = { title: "Profile — PARA PO" };
 
@@ -20,6 +23,7 @@ export default async function ProfilePage() {
   }
 
   const profile = await getCurrentProfile();
+  const { favorites } = await getMyFavorites(user.id);
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 py-6">
@@ -34,8 +38,16 @@ export default async function ProfilePage() {
             ? `Member since ${new Date(profile.created_at).toLocaleDateString()}. Role is assigned server-side and can only be changed by an administrator.`
             : "Signed in. Your app profile row will appear here once the Phase 2 database migration is applied."}
         </p>
-        <div>
+        <p className="text-sm text-asphalt">
+          <Link href="/favorites" className="font-semibold text-primary-dark hover:underline">
+            {favorites.length} saved favorite{favorites.length === 1 ? "" : "s"} →
+          </Link>
+        </p>
+        <div className="flex flex-wrap gap-2">
           <LogoutButton />
+          <Link href="/map">
+            <Button variant="ghost">Open map</Button>
+          </Link>
         </div>
       </Card>
     </div>

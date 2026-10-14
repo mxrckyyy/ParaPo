@@ -38,6 +38,10 @@ export interface DemoVehicle {
   latitude: number;
   longitude: number;
   status: VehicleStatus;
+  /** True for a community-shared sighting (Phase 3); absent = fictional demo dot. */
+  live?: boolean;
+  /** ISO timestamp of the sighting; stale (>5 min) markers auto-dim. */
+  lastSeen?: string | null;
 }
 
 export interface DemoReport {
@@ -48,6 +52,8 @@ export interface DemoReport {
   longitude: number;
   description: string;
   createdAgo: string;
+  /** True for a real community row (Phase 3); absent = fictional sample. */
+  live?: boolean;
 }
 
 export interface DemoAlert {
@@ -56,4 +62,6 @@ export interface DemoAlert {
   message: string;
   severity: AlertSeverity;
   expiresText: string;
+  /** True for a published row (Phase 4); absent = fictional sample. */
+  live?: boolean;
 }
