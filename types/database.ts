@@ -57,6 +57,14 @@ export interface DbFavorite {
   created_at: string;
 }
 
+export interface DbVote {
+  id: string;
+  report_id: string;
+  user_id: string;
+  value: 1 | -1;
+  created_at: string;
+}
+
 export interface DbUser {
   id: string;
   email: string | null;

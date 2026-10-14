@@ -31,3 +31,9 @@ grant select on public.users to authenticated;
 -- Authenticated writes permitted by policy design (RLS still enforces terms).
 grant insert, update, delete on public.vehicles to authenticated;
 grant insert, update, delete on public.reports to authenticated;
+
+-- Admin writes (Phase 4 moderation/alerts): RLS "admin write" policies gate
+-- these to admins, but the authenticated role still needs table-level
+-- privileges or admin INSERT/UPDATE/DELETE fails before RLS is evaluated.
+-- Ordinary users remain blocked by the RLS policies themselves.
+grant insert, update, delete on public.alerts to authenticated;

@@ -74,6 +74,17 @@ Index: `idx_alerts_expires (expires_at)`. Read filter: `expires_at IS NULL OR ex
 | created_at | timestamptz | `DEFAULT now()` |
 Constraints: `CHECK ((route_id IS NULL) <> (stop_id IS NULL))` (exactly one set); `UNIQUE (user_id, route_id, stop_id)` (null-safe via partial indexes in migration if needed — document exact DDL there).
 
+### report_votes — accuracy votes on reports (Phase 5, pending migration)
+| col | type | constraints |
+|---|---|---|
+| id | uuid PK | `DEFAULT gen_random_uuid()` |
+| report_id | uuid NOT NULL | `REFERENCES reports(id) ON DELETE CASCADE` |
+| user_id | uuid NOT NULL | `REFERENCES users(id) ON DELETE CASCADE` |
+| value | smallint NOT NULL | `CHECK (value IN (1, -1))` — 1 confirmed, -1 inaccurate |
+| created_at | timestamptz | `DEFAULT now()` |
+Constraints: `UNIQUE (report_id, user_id)` (one ballot per user per report, enforced at the DB);
+index `idx_report_votes_report (report_id)`. Full DDL: `supabase/migrations/20261015000003_report_votes.sql` (STATUS: committed, NOT APPLIED).
+
 ## 2. Relationships
 `users 1—< reports, favorites`; `routes 1—< stops, vehicles`; `routes/stops 1—< favorites`; `alerts` standalone; `vehicles` deliberately user-anonymous.
 
@@ -109,6 +120,10 @@ create policy "alerts admin write" on alerts for all using (public.is_admin()) w
 -- favorites: owner-only
 create policy "favorites owner all" on favorites for all using (auth.uid()=user_id) with check (auth.uid()=user_id);
 
+-- report_votes (Phase 5, migration ...00003): public tally reads, owner-only ballots
+create policy "report_votes public read" on report_votes for select using (true);
+create policy "report_votes owner write" on report_votes for all to authenticated using (auth.uid()=user_id) with check (auth.uid()=user_id);
+
 -- users: own read; admin list; no direct role self-edit (role change via admin function only)
 create policy "users own read" on users for select using (auth.uid()=id or public.is_admin());
 ```
@@ -131,6 +146,9 @@ Test matrix in `docs/TESTING.md` covers guest/commuter/admin × each table.
   — widens reports SELECT with `or public.is_admin()` so moderators can list others'
   pending rows (base policy exposes approved + own only). Policy-only change, no data
   changes, RLS stays enabled. See RLS-02 in `docs/TESTING.md` §6.
+- Phase 5 votes (pending user run): `supabase/migrations/20261015000003_report_votes.sql`
+  — new `report_votes` table (one vote per user per report, values ±1), partial
+  index on report, RLS (public read, owner-only write) + inline GRANTs. CREATE-only.
 - Phase 3: NO schema change required — `vehicles`/`reports` columns already cover sharing + reporting (verified against this doc before coding). No new migration file.
 - Admin grant (secure, run in SQL editor or script with service-role, never client):
 ```sql

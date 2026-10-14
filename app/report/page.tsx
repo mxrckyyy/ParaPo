@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ReportForm } from "@/components/reports/ReportForm";
 import { LoginWall } from "@/components/ui/LoginWall";
 import { getCurrentUser } from "@/lib/auth";
@@ -25,6 +26,12 @@ export default async function ReportPage() {
         </p>
       </div>
       <ReportForm />
+      <p className="text-xs text-asphalt-muted">
+        <Link href="/reports" className="font-semibold text-primary-dark hover:underline">
+          View the community reports board →
+        </Link>{" "}
+        Confirm what you observe, or flag inaccurate reports.
+      </p>
     </div>
   );
 }

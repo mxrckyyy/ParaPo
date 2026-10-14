@@ -65,6 +65,22 @@ All significant changes by phase. Docs updated per Maintenance Rules; test claim
 - Alerts center: `getLiveAlerts` (expiry-filtered) + `AlertsLive` (severity filter, realtime) + home `AlertBanner`; `/alerts` serves live rows or labeled samples. Favorites link to routes + saved dates; profile shows counts + links.
 - Verification: unit 22/22, lint/typecheck/build, 15/15 smoke (manifest valid JSON, admin wall, assets served) PASS. NOT executed: Lighthouse/PWA install, SW offline, admin E2E (ADMIN-01 steps), deploy — no prod URL claimed. Phase 2/3 manual items preserved NOT EXECUTED. No zero-bug claim; Phase 5 not started.
 
+## [Phase 5] — 2026-10-15 — report voting implemented; other future items explicitly deferred (no scope invented)
+- Scope decision: the plan's Phase 5+ bucket lists 7 future ideas with no acceptance criteria. Implemented the only one completable in code with available resources — **votes on reports**; the other six are deferred with per-item reasons (operator dashboard: needs requirements amendment; GPS ingest: needs hardware + design; push: needs provider credentials; fare calculator: no verified fare source exists and inventing fares is forbidden; offline outbox: needs sync-design amendment; i18n: needs scope amendment).
+- Added `supabase/migrations/20261015000003_report_votes.sql` (table + one-vote UNIQUE + index + RLS + inline GRANTs; user applies), `DbVote` type, `voteSchema`, pure `tallyVotes` + `app/actions/votes.ts` toggle (verified identity, UNIQUE backstop), `getReportsWithVotes`, `/reports` board + `ReportBallot` (counts public, voting login-gated), links from `/report`.
+- Verification: unit 28/28, lint/typecheck/build, 15/15 smoke incl. `/reports` PASS. NOT executed: vote E2E, vote isolation, migration apply, `gen types`, browser visual. Earlier phases' NOT EXECUTED items untouched. No zero-bug claim; Phase 6 not started.
+
+## [Verification Batch 1] — 2026-10-15 — DB blockers audited, two migration defects fixed pre-apply, live runs still pending
+- Live REST (nothing created/altered): PRIV-01 still 401s (repair unapplied); `report_votes` absent PGRST205 (VOTE-01 unapplied); routes 0 rows (seed not run).
+- Fixed before any damage: (1) RLS-02 file would have broken ALL anon report reads (missing anon EXECUTE on `is_admin()`) → grant added with rationale; (2) PRIV-01 file lacked authenticated write grants on `alerts` → Phase 4 admin alert publish/delete would have failed at privilege stage → grants added (RLS still gates to admins).
+- RT-01 code re-verified (paused-fallback + cleanup); publication membership needs the user Dashboard check. VOTE-01 code/SQL re-audited clean.
+- Checks: test 28/28, lint, typecheck, build (20/20) all PASS. RLS never disabled; no secrets touched; migrations remain CREATE/GRANT-only.
+
+## [Phase 6 audit] — 2026-10-15 — no such phase defined; nothing implemented, nothing invented
+- Verified `docs/IMPLEMENTATION_PLAN.md` contains Phase 0–4 plus "Phase 5+ Future" only. Per the do-not-invent-scope rule: zero code, schema, or config changes.
+- Tree-integrity re-verification: `npm run test` 28/28, `lint`, `typecheck`, `build` (20/20) all PASS on the unchanged tree.
+- All prior NOT EXECUTED items, blockers, and gates carry over untouched. Next: user defines new scope or supplies manual-verification results.
+
 ## [Phase 2 audit] — 2026-10-15 — user browser login tests PASS, gate honestly held open
 - Recorded user-verified PASS: login without crash or red box (BUG-03 fix confirmed in real use), profile nav + email, refresh persistence, logout + walls. Authenticated-sessions code path now proven both directions (logged-in email + logged-out walls).
 - Added `docs/TESTING.md` §7 acceptance checklist (PASS / NOT EXECUTED per criterion, evidence-linked). No FAILs; nothing passed without evidence. Still NOT EXECUTED: signup/confirmation, error-message paths, favorites E2E, two-account isolation, authenticated RLS half, PRIV-01 repair run, `gen types`, browser visual.

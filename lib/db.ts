@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { DEMO_ROUTES } from "@/lib/mock";
 import type { DemoRoute } from "@/types";
-import type { DbAlert, DbFavorite, DbReport, DbRoute, DbStop, DbVehicle } from "@/types/database";
+import type { DbAlert, DbFavorite, DbReport, DbRoute, DbStop, DbVehicle, DbVote } from "@/types/database";
+import { tallyVotes, type VoteTally } from "@/lib/votes";
 
 export type DataSource = "supabase" | "demo";
 
@@ -146,6 +147,56 @@ export async function getLiveAlerts(limit = 50): Promise<{ rows: DbAlert[]; avai
     return { rows: data as DbAlert[], available: true };
   } catch {
     return { rows: [], available: false };
+  }
+}
+
+export interface ReportWithVotes {
+  report: DbReport;
+  tally: VoteTally;
+}
+
+/**
+ * Community reports with vote tallies for /reports. Tallies aggregate in JS
+ * over RLS-visible rows (two bounded queries, no RPC surface). Missing table
+ * → empty with available=false (page shows an honest setup note).
+ */
+export async function getReportsWithVotes(
+  userId: string | null,
+  limit = 50,
+): Promise<{ items: ReportWithVotes[]; available: boolean }> {
+  try {
+    const supabase = createClient();
+    const { data: reports, error } = await supabase
+      .from("reports")
+      .select("id,user_id,type,latitude,longitude,description,created_at,status")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error || !reports) return { items: [], available: false };
+    const rows = reports as DbReport[];
+    const ids = rows.map((r) => r.id);
+    let byReport = new Map<string, { user_id: string; value: 1 | -1 }[]>();
+    if (ids.length > 0) {
+      const { data: votes, error: voteError } = await supabase
+        .from("report_votes")
+        .select("report_id,user_id,value")
+        .in("report_id", ids);
+      if (voteError) {
+        // Votes table missing (42P01) → reports still list, tallies stay zero.
+        if (voteError.code !== "42P01") return { items: [], available: false };
+      } else {
+        for (const v of (votes ?? []) as { report_id: string; user_id: string; value: 1 | -1 }[]) {
+          const list = byReport.get(v.report_id) ?? [];
+          list.push({ user_id: v.user_id, value: v.value });
+          byReport.set(v.report_id, list);
+        }
+      }
+    }
+    return {
+      items: rows.map((report) => ({ report, tally: tallyVotes(byReport.get(report.id) ?? [], userId) })),
+      available: true,
+    };
+  } catch {
+    return { items: [], available: false };
   }
 }
 

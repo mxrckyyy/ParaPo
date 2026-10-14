@@ -15,3 +15,12 @@ create policy "reports public read" on public.reports
     or auth.uid() = user_id
     or public.is_admin()
   );
+
+-- REQUIRED companion grant: the widened policy calls is_admin() while
+-- evaluating rows for EVERY role, including anon. The base migration revoked
+-- EXECUTE on is_admin() from anon, so without this grant every anonymous
+-- SELECT on reports would fail with "permission denied for function"
+-- instead of returning approved rows. Granting EXECUTE is safe: the function
+-- only tests the CALLER's own row and always returns false for anon
+-- (auth.uid() is NULL), leaking nothing about who the admins are.
+grant execute on function public.is_admin() to anon;

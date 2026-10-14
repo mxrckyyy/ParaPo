@@ -44,16 +44,17 @@ Out of MVP (Phase 4+): operator dashboard, direct GPS devices, push notification
 
 No custom backend server. Frontend talks directly to Supabase via RLS-secured anon key; service-role key never ships to client.
 
-## 5. Implementation Status (2026-10-15, Phase 4 code complete, deploy + live-verification pending)
+## 5. Implementation Status (2026-10-15, Phase 5 voting complete, other future items deferred)
 - Phase 0: DONE. Phase 1: code complete locally, deploy pending.
 - Phase 2: code COMPLETE (incl. BUG-03 login fix); user-verified login/logout/session/walls. Still open: PRIV-01 repair run, signup/confirmation + error paths, favorites E2E + isolation, `gen types`, browser visual.
 - Phase 3: code COMPLETE, live multi-client verification pending (RT-01 + session E2E open).
-- Phase 4: code COMPLETE, deploy + live-verification pending. Implemented: PWA manifest + generated PNG icons (placeholder branding) + hand-written SW (tile cache, shell precache, offline page, prod-only registration); admin moderation dashboard (login wall → not-permitted → pending queue approve/reject/delete + policy-hint empty state) with server-side `requireAdmin` on page + every action; alert publishing/removal + alerts center (severity filter, realtime, expiry filtering) + home banner; favorites links/dates + profile counts/links polish. New pending user SQL: `..._reports_admin_read` (RLS-02) alongside PRIV-01 + RT-01. `npm run test` 22/22; lint/typecheck/build + 15/15 smoke PASS. No FAILs.
-- Repo state: local git (Phase 2 audit + Phase 3 + Phase 4 changes uncommitted), origin/main exists; Supabase migrated (PRIV-01, RT-01, RLS-02 pending); no Vercel. Phase 5 must NOT start without explicit user approval.
+- Phase 4: code COMPLETE, deploy + live-verification pending (RLS-02, ADMIN-01, PWA-01, DEPLOY-01 open).
+- Phase 5: PARTIAL by design — implemented the one item completable purely in code: report accuracy voting (`report_votes` table + toggle action + `/reports` board + 6 new unit tests; migration prepared, user applies). Deferred with reasons (each needs amendment/external config): operator dashboard, GPS-device ingest, push notifications, fare-matrix calculator (no verified fare source — inventing fares forbidden), full offline outbox, Tagalog i18n. `npm run test` 28/28; lint/typecheck/build + 15/15 smoke PASS. No FAILs.
+- Repo state: local git (all Phase 2–5 work uncommitted per instructions), origin/main exists and was current at 98bfb5a; Supabase migrated (PRIV-01, RT-01, RLS-02, VOTE-01 pending); no Vercel. No Phase 6 exists in the plan — nothing to start; awaiting user direction (new scope definition or manual-verification results).
 
 ## 6. Current Phase / Next Task / Outstanding Issues
-- Current phase: **Phase 4 code complete — deploy + live verification pending; earlier manual checks carried over unchanged.**
-- Next task (user): RLS-02 + PRIV-01 + RT-01 SQL/Dashboard steps, then admin E2E (ADMIN-01), PWA/Browser checks (PWA-01), AUTH-02 + Phase 3 session tests; Vercel deploy (DEPLOY-01). See `docs/TESTING.md` §6.
+- Current phase: **No Phase 6 defined — project awaits user direction (define new scope, or supply manual-verification results for open gates).**
+- Next task (user): VOTE-01 migration + vote E2E; RLS-02 + PRIV-01 + RT-01; ADMIN-01 + PWA-01 + AUTH-02 remainder + Phase 3/5 session tests; DEPLOY-01 + push. See `docs/TESTING.md` §6.
 - Outstanding issues / blockers:
   1. RLS-02 + PRIV-01 + RT-01: user SQL/Dashboard steps (all fail-safe until applied).
   2. ADMIN-01 + PWA-01 + AUTH-02 remainder + Phase 3 live session tests (need admin account, browsers, Vercel auth).
@@ -85,8 +86,9 @@ npm run typecheck # tsc --noEmit (strict) — PASS 2026-10-15
 npm run build     # next build — PASS 2026-10-15 (17 static pages)
 npm start         # serve production build — verified, 11/11 routes HTTP 200
 ```
-Earlier (preserved): Phase 2 user login/logout/session/walls verified; anon RLS denials proven; Phase 3 unit 14/14 + smoke 12/12. Still open from those phases: PRIV-01, AUTH-02 remainder, RT-01, Phase 3 session E2E, `gen types`, browser visual.
-Phase 4: `npm run test` 22/22 PASS; lint/typecheck/build green; prod smoke 15/15 (manifest valid, admin wall, icons served). NOT executed: PWA install/Lighthouse, SW offline behavior, admin E2E, deploy (no prod URL). Full log in `docs/TESTING.md` §5h. Gates for Phases 2–4 remain open on manual verification — Phase 5 must not start without explicit approval.
+Earlier (preserved): Phase 2 user login/logout/session/walls verified; anon RLS denials proven; Phase 3 unit 14/14 + smoke 12/12; Phase 4 unit 22/22 + smoke 15/15. Still open from those phases: PRIV-01, RLS-02, RT-01, AUTH-02 remainder, ADMIN-01, PWA-01, Phase 3 session E2E, `gen types`, browser visual, DEPLOY-01.
+Phase 5: `npm run test` 28/28 PASS (vote tally + schema tests); lint/typecheck/build green; prod smoke 15/15 incl. `/reports` board. NOT executed: vote toggle E2E, vote isolation, migration apply, `gen types`, browser visual. Full log in `docs/TESTING.md` §5i.
+Phase 6: no such phase exists in `docs/IMPLEMENTATION_PLAN.md` (Phase 0–4 + "Phase 5+ Future" only) — no code changes made; tree re-verified green (`docs/TESTING.md` §5j). No phase gate fully met — new scope or manual results needed before anything further.
 
 ## 10. Known Bugs / Failed Tests / Blockers
 - Build bug found + fixed in Phase 1: `window is not defined` prerendering `/`
@@ -97,7 +99,7 @@ Phase 4: `npm run test` 22/22 PASS; lint/typecheck/build green; prod smoke 15/15
   `outcome.ok` on successful login. Actions now return `redirectTo`; client navigates.
 - Map tiles and 360px/1280px layouts NOT verified in a real browser (no headless
   browser tooling in this environment) — manual check recommended before deploy.
-- Blockers: privilege repair SQL run (PRIV-01); AUTH-02 browser tests (need user-owned test accounts); GitHub remote + Vercel need user auth; email-confirmation delivery unverified.
+- Blockers: VOTE-01 + RLS-02 + PRIV-01 SQL runs; RT-01 exposure; AUTH-02/ADMIN-01/PWA-01 + Phase 3/5 session browser tests (need user-owned accounts); Vercel deploy + GitHub push (user auth; no auto-commit/push per instructions); email-confirmation delivery unverified.
 - `docs/TESTING.md` §5d–§6 hold the full verified state; nothing is claimed green
   that was not executed.
 

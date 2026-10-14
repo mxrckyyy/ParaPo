@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alertCreateSchema, reportSubmitSchema, vehicleShareSchema } from "./validations";
+import { alertCreateSchema, reportSubmitSchema, vehicleShareSchema, voteSchema } from "./validations";
 
 describe("reportSubmitSchema", () => {
   it("accepts a valid report", () => {
@@ -47,5 +47,22 @@ describe("alertCreateSchema", () => {
       alertCreateSchema.safeParse({ title: "Roadworks", message: "x".repeat(1001), severity: "info" }).success,
     ).toBe(false);
     expect(alertCreateSchema.safeParse({ title: "Roadworks", message: "ok", severity: "urgent" }).success).toBe(false);
+  });
+});
+
+describe("voteSchema", () => {
+  it("accepts +1/-1 on a UUID report", () => {
+    expect(
+      voteSchema.safeParse({ reportId: "11111111-1111-4111-8111-111111111111", value: 1 }).success,
+    ).toBe(true);
+    expect(
+      voteSchema.safeParse({ reportId: "11111111-1111-4111-8111-111111111111", value: -1 }).success,
+    ).toBe(true);
+  });
+
+  it("rejects bad ids and out-of-range values", () => {
+    expect(voteSchema.safeParse({ reportId: "nope", value: 1 }).success).toBe(false);
+    expect(voteSchema.safeParse({ reportId: "11111111-1111-4111-8111-111111111111", value: 0 }).success).toBe(false);
+    expect(voteSchema.safeParse({ reportId: "11111111-1111-4111-8111-111111111111", value: 2 }).success).toBe(false);
   });
 });

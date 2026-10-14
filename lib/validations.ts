@@ -48,8 +48,15 @@ export const alertCreateSchema = z.object({
   expiresAt: z.string().trim().optional(),
 });
 
+/** Community accuracy vote on a report (Phase 5): 1 = confirmed, -1 = inaccurate. */
+export const voteSchema = z.object({
+  reportId: z.string().uuid("Unknown report."),
+  value: z.union([z.literal(1), z.literal(-1)]),
+});
+
 export type SearchInput = z.infer<typeof searchInputSchema>;
 export type ReportInput = z.infer<typeof reportInputSchema>;
 export type ReportSubmit = z.infer<typeof reportSubmitSchema>;
 export type VehicleShare = z.infer<typeof vehicleShareSchema>;
 export type AlertCreate = z.infer<typeof alertCreateSchema>;
+export type VoteInput = z.infer<typeof voteSchema>;

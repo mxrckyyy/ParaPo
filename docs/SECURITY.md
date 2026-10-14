@@ -19,6 +19,7 @@
 - Mutations verify `auth.uid()` ownership (reports/favorites); rate limits enforced server-side — implemented Phase 3: report 1/30 s per user (`app/actions/reports.ts`), vehicle update 1/10 s per row (`app/actions/vehicles.ts`) — client throttling is UX, server checks are control.
 - Service-role client (`lib/supabase/admin.ts`) only in Route Handlers/scripts; lint rule / code review must reject client imports of it. (Still unimported; no service-role key ever provided.)
 - Admin authorization (Phase 4): `lib/admin.ts requireAdmin()` re-checks the caller's own `users` row for `role='admin'` on the admin page AND inside every admin action; UI gating (login wall / not-permitted card) is UX only. First admin still bootstrapped via the §4 SQL grant, then `set_role`.
+- Community voting (Phase 5): `report_votes` RLS exposes public tally reads but restricts every write to `auth.uid()=user_id`; the UNIQUE(report_id, user_id) constraint backstops one-ballot-per-user even against races; actions never accept client user IDs.
 
 ## 5. Input Validation / Output Handling
 - Zod schemas (`lib/validations.ts`): enums for type/status/severity/role; lat/lng ranges; desc ≤500, alert message ≤1000; fare ≥0.

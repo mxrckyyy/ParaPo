@@ -50,6 +50,9 @@ Phases run in order. Do not start the next phase until its gate conditions are m
 
 ## Phase 5+ — Future (out of MVP)
 Operator dashboard, GPS-device ingest, push notifications, fare-matrix calculator, full offline outbox, votes on reports, i18n (Tagalog). Each needs its own plan amendment + migration + doc updates.
+- Status (2026-10-15): PARTIAL by design, per user instruction to proceed. Implemented the single item completable purely in code with available resources: **votes on reports** (`report_votes` + toggle action + `/reports` board + tests; migration prepared, user applies). Explicitly DEFERRED (each blocked as noted, none started): operator dashboard (needs operator requirements amendment); GPS-device ingest (needs hardware + ingest design); push notifications (needs provider credentials/opt-in infra); fare-matrix calculator (needs a verified fare source — inventing fares is forbidden); full offline outbox (needs IndexedDB sync-design amendment); Tagalog i18n (needs scope/dictionary amendment). No acceptance gate defined for this bucket in the plan; the voting slice is code-complete with live-E2E pending (VOTE-01).
+
+> Note (2026-10-15): there is no Phase 6 in this plan — phases run 0–4 plus the "Phase 5+ Future" bucket above. Any work beyond that bucket requires a user-defined scope amendment; nothing was invented under a "Phase 6" label.
 
 ## Completion Requirements (every phase)
 1. Code + migration committed; docs updated per Maintenance Rules.
