@@ -83,7 +83,7 @@ Constraints: `CHECK ((route_id IS NULL) <> (stop_id IS NULL))` (exactly one set)
 | value | smallint NOT NULL | `CHECK (value IN (1, -1))` — 1 confirmed, -1 inaccurate |
 | created_at | timestamptz | `DEFAULT now()` |
 Constraints: `UNIQUE (report_id, user_id)` (one ballot per user per report, enforced at the DB);
-index `idx_report_votes_report (report_id)`. Full DDL: `supabase/migrations/20261015000003_report_votes.sql` (STATUS: committed, NOT APPLIED).
+index `idx_report_votes_report (report_id)`. Full DDL: `supabase/migrations/20261015000003_report_votes.sql` (STATUS: applied by user, read-access verified, constraint/owner-isolation still requires E2E).`
 
 ## 2. Relationships
 `users 1—< reports, favorites`; `routes 1—< stops, vehicles`; `routes/stops 1—< favorites`; `alerts` standalone; `vehicles` deliberately user-anonymous.
@@ -139,13 +139,8 @@ Test matrix in `docs/TESTING.md` covers guest/commuter/admin × each table.
   function revokes) — STATUS: APPLIED by user (tables confirmed live 7/7 via REST;
   policies/functions per user's `verify-phase2.sql` run). `supabase/seed.sql`
   (SAMPLE rows) and `supabase/verify-phase2.sql` (read-only checks) accompany it.
-- Phase 2 repair (pending user run): `supabase/migrations/20261015000001_phase2_privilege_repair.sql`
-  — GRANTs only (anon SELECT on 5 public tables; authenticated working privileges
-  on all 7). RLS untouched and still the enforcer. See PRIV-01 in `docs/TESTING.md` §6.
-- Phase 4 admin-read (pending user run): `supabase/migrations/20261015000002_reports_admin_read.sql`
-  — widens reports SELECT with `or public.is_admin()` so moderators can list others'
-  pending rows (base policy exposes approved + own only). Policy-only change, no data
-  changes, RLS stays enabled. See RLS-02 in `docs/TESTING.md` §6.
+- Phase 2 repair (user-run and partially verified 2026-10-15): `supabase/migrations/20261015000001_phase2_privilege_repair.sql` applied. Anonymous `alerts`/`users` SELECT now returns 200 with expected row filtering; grants for `alerts` write to authenticated also include admin Phase 4 operations, but authenticated/admin behavior itself still needs session-based ADMIN/AUTH checks. GRANTs only; RLS untouched. See PRIV-01 in `docs/TESTING.md` §6.
+- Phase 4 admin-read (user-run and partially verified 2026-10-15): `supabase/migrations/20261015000002_reports_admin_read.sql` applied. Anonymous approved-report reads still return 200 with expected row filtering, confirming the widened policy and required anon `is_admin()` EXECUTE grant in an anonymous REST path. Authorization read behavior for administrators remains BLOCKED-pending a valid admin session and is tracked as ADMIN-01. No data changes; RLS stays enabled. See RLS-02 in `docs/TESTING.md` §6.
 - Phase 5 votes (pending user run): `supabase/migrations/20261015000003_report_votes.sql`
   — new `report_votes` table (one vote per user per report, values ±1), partial
   index on report, RLS (public read, owner-only write) + inline GRANTs. CREATE-only.

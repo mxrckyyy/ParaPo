@@ -50,7 +50,7 @@ No custom backend server. Frontend talks directly to Supabase via RLS-secured an
 - Phase 3: code COMPLETE, live multi-client verification pending (RT-01 + session E2E open).
 - Phase 4: code COMPLETE, deploy + live-verification pending (RLS-02, ADMIN-01, PWA-01, DEPLOY-01 open).
 - Phase 5: PARTIAL by design — implemented the one item completable purely in code: report accuracy voting (`report_votes` table + toggle action + `/reports` board + 6 new unit tests; migration prepared, user applies). Deferred with reasons (each needs amendment/external config): operator dashboard, GPS-device ingest, push notifications, fare-matrix calculator (no verified fare source — inventing fares forbidden), full offline outbox, Tagalog i18n. `npm run test` 28/28; lint/typecheck/build + 15/15 smoke PASS. No FAILs.
-- Repo state: local git (all Phase 2–5 work uncommitted per instructions), origin/main exists and was current at 98bfb5a; Supabase migrated (PRIV-01, RT-01, RLS-02, VOTE-01 pending); no Vercel. No Phase 6 exists in the plan — nothing to start; awaiting user direction (new scope definition or manual-verification results).
+- Repo state: local git (all prior work consolidated at `ed51ecd`); Supabase migration execution + publication now user-confirmed for PRIV-01, RLS-02, VOTE-01, and RT-01; anonymous read behavior verified by safe REST probes. Admin/runtime-realtime/owner-session checks remain NOT EXECUTED. No Vercel deployment. Phase 6 remains undefined in `IMPLEMENTATION_PLAN.md`.
 
 ## 6. Current Phase / Next Task / Outstanding Issues
 - Current phase: **No Phase 6 defined — project awaits user direction (define new scope, or supply manual-verification results for open gates).**
