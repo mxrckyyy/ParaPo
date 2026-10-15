@@ -116,7 +116,7 @@ export function ReportForm() {
               role="radio"
               aria-checked={type === o.value}
               onClick={() => setType(o.value)}
-              className={`flex min-h-[44px] items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+              className={`flex min-h-[56px] w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                 type === o.value ? "border-primary bg-primary/10 text-primary-dark" : "border-line bg-white text-asphalt"
               }`}
             >
@@ -189,7 +189,7 @@ export function ReportForm() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="e.g. Queue forming at the corner stop."
-          className="rounded-lg border border-line bg-white px-3 py-2 text-sm text-asphalt placeholder:text-asphalt-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          className="min-h-[100px] rounded-lg border border-line bg-white px-3 py-2 text-sm text-asphalt placeholder:text-asphalt-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
         />
         <p className="text-xs text-asphalt-muted">{description.length}/500 · max 1 report per 30 seconds</p>
       </div>
@@ -200,8 +200,10 @@ export function ReportForm() {
         </p>
       ) : null}
 
-      <div>
-        <Button type="submit" disabled={pending}>{pending ? "Sending…" : "Submit report"}</Button>
+      <div className="w-full">
+        <Button type="submit" className="w-full justify-center" disabled={pending}>
+          {pending ? "Sending…" : "Submit report"}
+        </Button>
       </div>
       <DemoNotice compact />
       <p className="text-xs text-asphalt-muted">

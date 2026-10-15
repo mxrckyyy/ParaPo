@@ -13,8 +13,8 @@ export default async function MapPage() {
   const live = vehiclesLive && reportsLive;
 
   return (
-    <div className="flex flex-col gap-4">
-      <div>
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="flex flex-col gap-1">
         <h1 className="text-xl font-bold sm:text-2xl">Live map</h1>
         <p className="text-sm text-asphalt-muted">
           {live
@@ -23,14 +23,14 @@ export default async function MapPage() {
         </p>
       </div>
       {!live ? <DemoNotice /> : null}
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <LiveMap
           center={METRO_MANILA_CENTER}
           initialVehicles={live ? vehicles.map(toVehicleMarker) : DEMO_VEHICLES}
           initialReports={live ? reports.map(toReportMarker) : DEMO_REPORTS}
           live={live}
         />
-        <div className="flex flex-col gap-4">
+        <div className="hidden flex-col gap-4 lg:flex">
           <MapLegend />
         </div>
       </div>

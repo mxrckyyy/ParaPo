@@ -9,7 +9,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const styles: Record<Variant, string> = {
   primary:
-    "bg-primary text-white hover:bg-primary-dark focus-visible:ring-primary/50",
+    "bg-primary text-asphalt hover:bg-primary-dark focus-visible:ring-primary/40",
   secondary:
     "bg-white text-asphalt border border-line hover:bg-surface focus-visible:ring-primary/40",
   ghost: "bg-transparent text-asphalt hover:bg-surface focus-visible:ring-primary/40",

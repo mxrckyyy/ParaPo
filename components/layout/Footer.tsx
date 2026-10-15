@@ -7,7 +7,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 md:grid-cols-3">
         <div className="flex flex-col gap-2">
           <p className="flex items-center gap-2 text-base font-bold text-asphalt">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-asphalt">
               <Bus className="h-4 w-4" aria-hidden="true" />
             </span>
             PARA PO

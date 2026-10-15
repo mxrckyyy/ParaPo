@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { ArrowUpDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { DemoNotice } from "@/components/ui/DemoNotice";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -59,6 +59,7 @@ export function SearchPanel({
             onChange={(e) => setOrigin(e.target.value)}
             error={errors.origin}
             autoComplete="off"
+            className="w-full"
           />
           <Input
             label="Destination"
@@ -67,10 +68,24 @@ export function SearchPanel({
             onChange={(e) => setDestination(e.target.value)}
             error={errors.destination}
             autoComplete="off"
+            className="w-full"
           />
         </div>
-        <div>
-          <Button type="submit">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              const previousOrigin = origin;
+              setOrigin(destination);
+              setDestination(previousOrigin);
+              setErrors({});
+            }}
+            aria-label="Swap origin and destination"
+          >
+            <ArrowUpDown className="h-4 w-4" aria-hidden="true" /> Swap
+          </Button>
+          <Button type="submit" className="w-full justify-center sm:w-auto">
             <Search className="h-4 w-4" aria-hidden="true" /> Search demo routes
           </Button>
         </div>

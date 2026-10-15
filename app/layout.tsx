@@ -19,7 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="flex min-h-screen flex-col bg-surface text-asphalt antialiased">
         <ServiceWorkerRegister />
         <Navbar userEmail={user?.email ?? null} />
-        <main id="main-content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-4 pb-20 sm:px-6 sm:py-6 md:pb-6">
+        <main id="main-content" className="mx-auto w-full max-w-6xl flex-1 px-4 pt-4 pb-24 sm:px-6 sm:pt-6 sm:pb-24 md:pt-6 md:pb-8">
           {children}
         </main>
         <Footer />

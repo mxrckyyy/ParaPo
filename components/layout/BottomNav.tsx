@@ -10,7 +10,7 @@ const items = [
   { href: "/report", label: "Report", icon: AlertTriangle },
   { href: "/alerts", label: "Alerts", icon: Bell },
   { href: "/profile", label: "Profile", icon: User },
-];
+] as const;
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -18,18 +18,20 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Primary mobile"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-white/96 backdrop-blur supports-[padding:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-white/95 backdrop-blur supports-[padding:env(safe-area-inset-bottom)]:pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      <ul className="grid grid-cols-5">
+      <ul className="grid grid-cols-5 gap-1 px-1 py-1">
         {items.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
+          const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <li key={href}>
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-16 flex-col items-center justify-center gap-1 px-1 py-2 text-[11px] font-semibold leading-none transition-colors ${
-                  active ? "text-primary" : "text-asphalt-muted hover:text-asphalt"
+                className={`flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-[11px] font-semibold leading-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                  active
+                    ? "bg-primary/10 text-primary-dark"
+                    : "text-asphalt-muted hover:bg-surface hover:text-asphalt"
                 }`}
               >
                 <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />

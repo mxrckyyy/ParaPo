@@ -210,7 +210,27 @@ See defect register updates in §6 (PRIV-01 / RLS-02 / RT-01 / VOTE-01).","oldSt
 - Batch D — Admin: BLOCKED. No admin account was created, elevated, or accessed. The user still must bootstrap admin roles themselves following `docs/DATABASE_SCHEMA.md` §4 after explicitly confirming ownership of the exact account.
 - Batch E — Realtime: BLOCKED/NOT EXECUTED. The user-reported publication configuration remains the only evidence; no WebSocket event flow, fallback, or cleanup measurement was attempted.
 - Batch F — PWA/browser UX: NOT EXECUTED for install/prompt/offline/Lighthouse/visual checks. Build-time route smoke and source inspection are code checks only. The fixed `sw.js` syntax check from Phase 4 remains the only lint/runtime artifact validation.
-- No browser assertions were falsely converted to PASS. No code or config change was performed because no reproducible failure could be separated from unavailable browser/session evidence.","path":"C:\\Users\\john marc comeros\\OneDrive\\Desktop\\ParaPo\\docs\\TESTING.md
+- No browser assertions were falsely converted to PASS. No code or config change was performed because no reproducible failure could be separated from unavailable browser/session evidence.
+
+## 5p. Actual Results (Phase 1 UI/UX refactor — design system + responsive app shell, 2026-10-15)
+
+- Scope: design tokens, responsive app shell, shared UI styles only. No schema, auth, Server Actions, or database contracts changed; no routes removed.
+- Automated checks: `npm run lint` PASS ("No ESLint warnings or errors"); `npm run typecheck` PASS (no output/errors); `npm run test` PASS (28/28 across 4 files: eta 10, validations 8, markers 6, votes 4); `npm run build` PASS ("Compiled successfully", 20/20 static/dynamic pages).
+- Git sanity: `git diff --check` PASS (only CRLF line-ending warnings; no whitespace errors).
+- Design tokens established: primary #10B981 (hover #059669), accent/fare amber #F59E0B, app background #F9FAFB, cards #FFFFFF, semantic info/warning/critical #2563EB/#D97706/#DC2626, muted text #64748B, Inter-first font stack, visible #10B981 focus rings and reduced-motion support.
+- Navigation behavior: existing sticky white top nav with backdrop blur and active-route indicator preserved; bottom navigation fixed to five destinations (Map, Search, Report, Alerts, Profile) with Lucide icons and labels; active item gets a primary background tint; safe-area padding included; bottom nav is hidden from md (768px) upward, so it does not compete with the desktop nav.
+- Responsive shell: main content uses max-w-6xl with consistent spacing and bottom padding (pb-24 below md, md:pb-8) so fixed mobile nav cannot cover actions/forms; global horizontal overflow is clipped and long text can wrap; mobile/tablet layouts remain constrained by the max-width.
+- Shared components touched: Tailwind token config, `app/globals.css`, `app/layout.tsx`, `BottomNav`, `Card`. Button/Input/EmptyState retain their responsive variants and accessible focus styles.
+- NOT EXECUTED / outstanding: browser visual inspection at 320px, 375px, 390px, 430px, 768px, 1024px, and 1440px; overlap/touch-target checks in a real browser; bottom-nav safe-area behavior on iOS; map tile rendering remains unverified (carried from Phase 1). No browser screenshot or viewport claim is made.
+
+## 5q. Actual Results (Phase 1 verification pass, 2026-10-15)
+
+- Verified implementation review against the current working tree before further changes: design tokens, shell, component changes, and docs changes inspected. No backend, auth, route, Supabase, or migration changes were introduced in this verification.
+- Development server check: app starts with the existing workflow. Port 3000 was already occupied by a stale process, so `npm run dev` used port 3001 and `GET /`, `/map`, and `/search` returned HTTP 200. Shared HTML smoke checks found the sticky top navigation and primary mobile navigation labels present.
+- Browser automation/visual inspection was unavailable in this environment, so no viewport screenshots or layout-overlap checks were performed. Responsive behavior is only inferred from the Tailwind classes and code inspection.
+- Confirmed regression fix: white text on `#10B981` had a 2.54:1 contrast ratio. Primary button/interactive surfaces now use `text-asphalt` (`#0F172A`), giving 7.04:1 on `#10B981` and 4.74:1 on `#059669`. This affects `Button`, `Navbar`, and `Footer` primary surfaces.
+- Commands after the fix: `npm run lint` PASS; `npm run typecheck` PASS; `npm run test` PASS (28/28); `npm run build` PASS (20/20 routes); `git diff --check` PASS aside from CRLF line-ending warnings.
+- Outstanding: manual browser verification at 320px, 375px, 390px, 430px, 768px, 1024px, and 1440px; mobile overlap and safe-area behavior; Leaflet map tile rendering. No commit, push, deploy, reset, or discard was performed.","path":"C:\\Users\\john marc comeros\\OneDrive\\Desktop\\ParaPo\\docs\\TESTING.md
 - SETUP-01: RESOLVED Phase 1.
 - SETUP-02: remote `origin/main` exists and is up to date through 98bfb5a; new Phase 4/5 work is uncommitted by instruction (user pushes). Vercel project still needed (see DEPLOY-01).
 - SETUP-03: RESOLVED — env configured, connectivity verified, tables confirmed live (7/7 resolve via REST).
@@ -252,3 +272,18 @@ See defect register updates in §6 (PRIV-01 / RLS-02 / RT-01 / VOTE-01).","oldSt
 - Source changes: bottom navigation, responsive spacing/card padding, mobile map height, heading scale. No routes, auth, database, RLS, or validation logic changed.
 - Automated checks: npm run test 28/28 PASS, lint PASS, typecheck PASS, build 20/20 PASS.
 - NOT EXECUTED: browser screenshot or viewport-specific visual verification. No viewport behavior is claimed beyond responsive Tailwind classes and successful build/rendering checks.
+
+## 5r. Actual Results (Phase 2 UI/UX refactor verification, 2026-10-15)
+
+- Scope: mobile map experience only. Changed app/map/page.tsx, components/map/LiveMap.tsx, components/map/MapView.tsx, and components/map/MapLegend.tsx. No DB schema, migration, RLS, auth, server action, env, or route changes.
+- Automated checks: npm run lint PASS (no warnings/errors); npm run typecheck PASS (no errors); npm run test PASS (28/28 in 4 files); npm run build PASS (Compiled successfully, 20/20 routes, /map 6.15 kB route JS); git diff --check PASS (only LF/CRLF line-ending warnings).
+- Development workflow checks: npm run dev started normally; GET / returned 200; GET /map returned 200. The /map response contained the floating "Saan ka papunta?" search control text. No browser automation or manual viewport testing was performed.
+- Implemented and source-verified: full-height map layout below header/above bottom navigation; desktop side panel preserved; ResizeObserver-based Leaflet size invalidation; safe geolocation with permission/unavailable handling; meaningful reset control; floating search via existing search route; collapsible legend; marker details panel with existing marker data and close action; selected marker highlighting; explicit notices that no ETA/fare/route is calculated from marker data.
+- NOT VERIFIED visually: viewport-specific layouts at 320, 375, 390, 430, 768, 1024, and 1440px; touch interactions; marker selection affordance behavior; map tile rendering; safe-area insets; horizontal overflow on a rendered browser. Existing Phase 1/2 manual checks remain outstanding. No commit, push, deploy, reset, or discard was performed. Phase 3 not started.
+
+## 5s. Actual Results (Phase 3 UI/UX refactor, 2026-10-15)
+
+- Scope: search, report, alerts, and profile UX only. Changed components/search/SearchPanel.tsx, components/reports/ReportForm.tsx, components/alerts/AlertCards.tsx, and app/profile/page.tsx. No backend, RLS, auth, Server Action, schema, env, or route changes.
+- Automated checks: npm run lint PASS; npm run typecheck PASS; npm run test PASS (28/28); npm run build PASS (20/20 routes); git diff --check PASS aside from CRLF warnings.
+- Improvements implemented: full-width search inputs and submit, accessible origin/destination swap, larger report-type buttons, improved description field, full-width loading submit button, severity iconography in alert cards, empty-state/map link preserved, and profile sections with initials fallback and actual saved-route count.
+- Not verified: browser rendering, visual responsive layouts, touch interactions, keyboard flows beyond code inspection, map tile rendering. No browser automation was performed. All prior outstanding manual checks remain open. No commit, push, deploy, reset, or discard was performed. Phase 4 not started.

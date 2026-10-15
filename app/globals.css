@@ -6,15 +6,22 @@
   color-scheme: light;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   font-family:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Inter, Arial, sans-serif;
+    Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  overflow-x: hidden;
+  overflow-wrap: anywhere;
 }
 
 /* Visible keyboard focus everywhere (WCAG 2.1 AA basics). */
 :focus-visible {
-  outline: 2px solid #16a34a;
+  outline: 2px solid #10b981;
   outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* Leaflet container needs an explicit height from its parent. */
