@@ -98,7 +98,7 @@ export function LiveMap({
         </p>
       ) : null}
 
-      <div className="h-[60vh] min-h-[380px] overflow-hidden rounded-xl border border-line bg-white">
+      <div className="h-[52vh] min-h-[340px] overflow-hidden rounded-xl border border-line bg-white sm:h-[60vh] sm:min-h-[380px]">
         <DemoMap
           center={center}
           vehicles={liveVehicles}

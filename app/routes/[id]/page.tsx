@@ -54,7 +54,7 @@ export default async function RouteDetailPage({ params }: { params: { id: string
         ← Back to search
       </Link>
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="text-2xl font-bold">{route.name}</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">{route.name}</h1>
         {isDemo ? <Badge kind="demo">Demo</Badge> : <Badge kind="approved">Live</Badge>}
       </div>
       {isDemo ? <DemoNotice /> : null}
@@ -64,10 +64,10 @@ export default async function RouteDetailPage({ params }: { params: { id: string
           {isDemo ? "Illustrative travel time (not a real prediction)" : "Estimated arrival at first stop"}
         </p>
         {isDemo ? (
-          <p className="text-3xl font-bold tabular-nums">{formatEtaRange(route.etaMin, route.etaMax)}</p>
+          <p className="text-2xl font-bold sm:text-3xl tabular-nums">{formatEtaRange(route.etaMin, route.etaMax)}</p>
         ) : liveEta ? (
           <>
-            <p className="text-3xl font-bold tabular-nums">{liveEta}</p>
+            <p className="text-2xl font-bold sm:text-3xl tabular-nums">{liveEta}</p>
             <p className="text-xs text-white/70">
               Estimate from {freshVehicleCount} shared vehicle(s) — no traffic data, unverified.
             </p>

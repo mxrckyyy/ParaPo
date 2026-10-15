@@ -9,7 +9,7 @@ export default async function SearchPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold">Route search</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">Route search</h1>
         <p className="text-sm text-asphalt-muted">
           {liveAvailable
             ? "Searching verified routes from Supabase, plus fictional demo matches below."

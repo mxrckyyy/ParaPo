@@ -23,7 +23,7 @@ export default async function HomePage() {
 
       {/* Hero */}
       <section className="flex flex-col gap-4 rounded-2xl bg-asphalt px-6 py-10 text-white md:px-10" aria-labelledby="hero-heading">
-        <h1 id="hero-heading" className="max-w-xl text-2xl font-bold leading-8 md:text-3xl">
+        <h1 id="hero-heading" className="max-w-xl text-xl font-bold sm:text-2xl leading-8 md:text-3xl">
           Para po! Know your ride before you wait.
         </h1>
         <p className="max-w-xl text-sm leading-6 text-white/80 md:text-base">
@@ -49,11 +49,11 @@ export default async function HomePage() {
 
       {/* Map preview */}
       <section className="flex flex-col gap-3" aria-labelledby="map-preview-heading">
-        <h2 id="map-preview-heading" className="text-lg font-bold">
+        <h2 id="map-preview-heading" className="text-base font-bold sm:text-lg">
           Demo map
         </h2>
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-          <div className="h-[380px] overflow-hidden rounded-xl border border-line bg-white">
+          <div className="h-72 min-h-[320px] overflow-hidden rounded-xl border border-line bg-white sm:h-[380px]">
             <DemoMap center={METRO_MANILA_CENTER} vehicles={DEMO_VEHICLES} reports={DEMO_REPORTS} />
           </div>
           <div className="flex flex-col gap-4">
@@ -79,7 +79,7 @@ export default async function HomePage() {
 
       {/* Search */}
       <section className="flex flex-col gap-3" aria-labelledby="search-heading">
-        <h2 id="search-heading" className="text-lg font-bold">
+        <h2 id="search-heading" className="text-base font-bold sm:text-lg">
           Find a demo route
         </h2>
         <SearchPanel liveRoutes={liveAvailable ? liveRoutes : []} liveAvailable={liveAvailable} />
@@ -88,7 +88,7 @@ export default async function HomePage() {
       {/* Reports + alerts preview */}
       <section className="grid gap-4 md:grid-cols-2" aria-labelledby="community-heading">
         <div className="flex flex-col gap-3">
-          <h2 id="community-heading" className="flex items-center gap-2 text-lg font-bold">
+          <h2 id="community-heading" className="flex items-center gap-2 text-base font-bold sm:text-lg">
             <Bell className="h-5 w-5" aria-hidden="true" /> Sample alerts
           </h2>
           {DEMO_ALERTS.map((a) => (
@@ -99,7 +99,7 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="flex flex-col gap-3">
-          <h2 className="text-lg font-bold">Sample community reports</h2>
+          <h2 className="text-base font-bold sm:text-lg">Sample community reports</h2>
           {DEMO_REPORTS.map((r) => (
             <ReportCard key={r.id} report={r} />
           ))}

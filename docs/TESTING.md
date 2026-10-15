@@ -246,3 +246,9 @@ See defect register updates in §6 (PRIV-01 / RLS-02 / RT-01 / VOTE-01).","oldSt
   4. Click Log out → you return to `/login`; `/favorites` and `/profile` show login walls.
   5. Report which steps passed; on ANY red error box, paste its exact text (no tokens/passwords).
 - BUG-01, BUG-02: remain fixed/verified.
+
+## 5o. Actual Results (Mobile-first UI pass, 2026-10-15)
+
+- Source changes: bottom navigation, responsive spacing/card padding, mobile map height, heading scale. No routes, auth, database, RLS, or validation logic changed.
+- Automated checks: npm run test 28/28 PASS, lint PASS, typecheck PASS, build 20/20 PASS.
+- NOT EXECUTED: browser screenshot or viewport-specific visual verification. No viewport behavior is claimed beyond responsive Tailwind classes and successful build/rendering checks.

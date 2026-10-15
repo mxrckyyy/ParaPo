@@ -11,7 +11,7 @@ export default function OfflinePage() {
     <div className="mx-auto flex max-w-md flex-col gap-4 py-10">
       <Card className="flex flex-col items-center gap-3 py-10 text-center">
         <WifiOff className="h-8 w-8 text-asphalt-muted" aria-hidden="true" />
-        <h1 className="text-lg font-bold text-asphalt">You&apos;re offline</h1>
+        <h1 className="text-base font-bold sm:text-lg text-asphalt">You&apos;re offline</h1>
         <p className="text-sm text-asphalt-muted">
           PARA PO needs a connection for fresh transport data. Cached map tiles
           still work — reconnect and try again.

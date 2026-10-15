@@ -15,7 +15,7 @@ export default async function MapPage() {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold">Live map</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">Live map</h1>
         <p className="text-sm text-asphalt-muted">
           {live
             ? "Community-shared sightings and reports around Metro Manila, updating in real time. Unverified until moderated."

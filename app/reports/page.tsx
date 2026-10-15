@@ -17,7 +17,7 @@ export default async function ReportsPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold">Community reports</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">Community reports</h1>
         <p className="text-sm text-asphalt-muted">
           Confirm reports you also observe, or flag inaccurate ones. Votes are
           public counts; who voted what stays private. New reports start pending

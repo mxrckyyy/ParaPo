@@ -30,7 +30,7 @@ export function Navbar({ userEmail }: { userEmail: string | null }) {
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white">
             <Bus className="h-5 w-5" aria-hidden="true" />
           </span>
-          <span className="text-lg font-bold tracking-tight text-asphalt">
+          <span className="text-base font-bold sm:text-lg tracking-tight text-asphalt">
             PARA&nbsp;PO
           </span>
         </Link>

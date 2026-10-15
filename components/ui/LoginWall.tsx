@@ -16,7 +16,7 @@ export function LoginWall({
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface">
         <Lock className="h-6 w-6 text-asphalt-muted" aria-hidden="true" />
       </span>
-      <h1 className="text-lg font-bold text-asphalt">{title}</h1>
+      <h1 className="text-base font-bold sm:text-lg text-asphalt">{title}</h1>
       <p className="text-sm text-asphalt-muted">{message}</p>
       <div className="flex gap-2">
         <Link href="/login">

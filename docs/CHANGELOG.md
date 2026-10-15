@@ -102,3 +102,10 @@ All significant changes by phase. Docs updated per Maintenance Rules; test claim
 - No Playwright/Cypress/browser binary/session or user-controlled accounts were available, so all interactive Batch 2 browser flows remain BLOCKED/NOT EXECUTED, not treated as failures.
 - Related safe evidence: npm run test 28/28 PASS, lint PASS, typecheck PASS, npm run build 20/20 PASS; earlier user-confirmed AUTH-02a subset remains the only browser evidence.
 - No application or schema changes were performed. Tests remaining: auth validation/errors, protected/admin access, favorites isolation, report/vote behavior and isolation, admin moderation, realtime runtime delivery, PWA install/offline/browser visual.
+
+## [Mobile-first UI pass] - 2026-10-15 (code, not a new phase)
+
+- Added responsive bottom navigation for primary commuter actions and mobile bottom spacing to prevent content overlap.
+- Reduced card/footer spacing and improved mobile map height; standardized headings with responsive Tailwind sizes.
+- Verified: lint PASS, typecheck PASS, test 28/28 PASS, build 20/20 PASS.
+- Not verified: browser screenshots/viewports were not inspected in this environment; no mobile visual or touch interaction claim is made.

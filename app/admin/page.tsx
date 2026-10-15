@@ -32,7 +32,7 @@ export default async function AdminPage() {
       <div className="mx-auto flex max-w-3xl flex-col gap-4 py-6">
         <Card className="flex flex-col items-center gap-2 py-10 text-center">
           <ShieldCheck className="h-8 w-8 text-asphalt-muted" aria-hidden="true" />
-          <h1 className="text-lg font-bold text-asphalt">Not permitted</h1>
+          <h1 className="text-base font-bold sm:text-lg text-asphalt">Not permitted</h1>
           <p className="max-w-sm text-sm text-asphalt-muted">
             {gate.reason === "setup"
               ? "The user database isn't set up yet, so roles can't be checked."
@@ -51,21 +51,21 @@ export default async function AdminPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="flex items-center gap-2 text-2xl font-bold">
+        <h1 className="flex items-center gap-2 text-xl font-bold sm:text-2xl">
           <ShieldCheck className="h-6 w-6" aria-hidden="true" /> Moderation dashboard
         </h1>
         <Badge kind="approved">Admin</Badge>
       </div>
 
       <section className="flex flex-col gap-3" aria-labelledby="pending-heading">
-        <h2 id="pending-heading" className="text-lg font-bold">
+        <h2 id="pending-heading" className="text-base font-bold sm:text-lg">
           Pending reports ({pending.length})
         </h2>
         <ModerationQueue items={pending} />
       </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="alerts-admin-heading">
-        <h2 id="alerts-admin-heading" className="text-lg font-bold">Service alerts</h2>
+        <h2 id="alerts-admin-heading" className="text-base font-bold sm:text-lg">Service alerts</h2>
         <AlertManager />
         {!alertsLive ? (
           <p className="text-xs text-asphalt-muted">

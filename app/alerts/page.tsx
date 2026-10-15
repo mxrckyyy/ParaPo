@@ -12,7 +12,7 @@ export default async function AlertsPage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-bold">Alerts</h1>
+        <h1 className="text-xl font-bold sm:text-2xl">Alerts</h1>
         <p className="text-sm text-asphalt-muted">
           {available
             ? "Official service alerts from administrators. Expired alerts are hidden automatically."

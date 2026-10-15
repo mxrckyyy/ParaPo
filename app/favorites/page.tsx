@@ -25,7 +25,7 @@ export default async function FavoritesPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 py-6">
-      <h1 className="text-2xl font-bold">Favorites</h1>
+      <h1 className="text-xl font-bold sm:text-2xl">Favorites</h1>
       {setupPending ? (
         <FavoritesSetupNotice />
       ) : favorites.length === 0 ? (
